@@ -1,6 +1,4 @@
-/* State of charge: big percentage + horizontal progress bar + SOC/DOD footer. */
-.soc-card { grid-column: span 6; }
-
+/* State of charge: big percentage + progress bar + SOC/DOD footer. Visual only. */
 .soc-value {
   font-family: var(--font-display);
   font-size: 34px;
@@ -8,7 +6,10 @@
   line-height: 1;
 }
 
-.soc-value span { color: var(--muted-foreground); font-size: 17px; }
+.soc-value span {
+  color: var(--muted-foreground);
+  font-size: 17px;
+}
 
 .progress-track {
   height: 8px;
@@ -26,4 +27,6 @@
   font-size: 9px;
 }
 
-.soc-footer b { color: var(--foreground); }
+.soc-footer b {
+  color: var(--foreground);
+}

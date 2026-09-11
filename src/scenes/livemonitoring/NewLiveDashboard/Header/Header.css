@@ -1,6 +1,7 @@
-/* Top bar: hierarchy filters (left) + device status cluster (right). */
+/* Top bar visuals. Layout uses MUI Paper + flex via classes kept for style. */
 .top-header {
-  min-height: 42px;
+  min-height: 36px;
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -21,17 +22,20 @@
   gap: 6px;
 }
 
-.select-wrap { position: relative; min-width: 0; }
+.select-wrap {
+  position: relative;
+  min-width: 0;
+}
 
 .select-wrap select {
-  height: 32px;
-  max-width: 130px;
+  height: 28px;
+  max-width: 120px;
   appearance: none;
   border: 0;
   border-radius: 5px;
   background: var(--muted);
   color: var(--foreground);
-  padding: 0 25px 0 9px;
+  padding: 0 22px 0 8px;
   font-size: 11px;
   font-weight: 600;
   outline: none;
@@ -39,16 +43,16 @@
 
 .select-wrap svg {
   position: absolute;
-  top: 10px;
-  right: 7px;
+  top: 8px;
+  right: 6px;
   pointer-events: none;
   color: var(--muted-foreground);
 }
 
 .search-box {
   display: flex;
-  width: 128px;
-  height: 32px;
+  width: 120px;
+  height: 28px;
   align-items: center;
   gap: 6px;
   border: 1px solid var(--border);
@@ -93,22 +97,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-.connection-icon { flex-shrink: 0; color: var(--success); }
-
-@media (max-width: 1399px) {
-  .top-header { gap: 7px; padding: 5px 7px; }
-  .select-wrap select { max-width: 108px; padding-left: 7px; }
-  .header-status { gap: 4px; }
-  .search-box { width: 108px; }
+.connection-icon {
+  flex-shrink: 0;
+  color: var(--success);
 }
 
 @media (max-width: 1100px) {
-  .top-header { grid-template-columns: 1fr; }
-  .header-status { justify-content: space-between; }
-}
-
-@media (max-width: 760px) {
-  .top-header { overflow-x: auto; }
-  .filter-row,
-  .header-status { min-width: max-content; }
+  .top-header {
+    grid-template-columns: 1fr;
+  }
+  .header-status {
+    justify-content: space-between;
+  }
 }

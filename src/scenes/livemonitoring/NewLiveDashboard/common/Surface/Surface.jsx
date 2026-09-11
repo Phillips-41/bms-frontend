@@ -3,11 +3,24 @@ import "./Surface.css";
 
 /**
  * Surface — MUI Paper styled as the standard dashboard card.
- * `className` receives the grid-placement class of the owning panel.
+ * Fills its grid cell; parent controls placement.
  */
-export default function Surface({ children, className = "", component = "section" }) {
+export default function Surface({ children, className = "", component = "section", sx = {} }) {
   return (
-    <Paper component={component} className={`surface ${className}`} square={false}>
+    <Paper
+      component={component}
+      className={`surface ${className}`}
+      square={false}
+      sx={{
+        height: "100%",
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        p: "5px 7px",
+        ...sx,
+      }}
+    >
       {children}
     </Paper>
   );

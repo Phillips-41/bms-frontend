@@ -1,10 +1,10 @@
-/* Live battery status: three dominant metric tiles. */
-.live-card { grid-column: span 6; }
-
+/* Live battery status: three dominant metric tiles. Visual only. */
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 7px;
+  min-height: 0;
+  flex: 1;
 }
 
 .metric {
@@ -30,8 +30,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.metric small { margin-left: 3px; color: var(--muted-foreground); font-size: 10px; font-weight: 600; }
+.metric small {
+  margin-left: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+}
 
 @media (max-width: 1399px) {
-  .metric strong { font-size: 19px; }
+  .metric strong {
+    font-size: 19px;
+  }
 }

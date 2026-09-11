@@ -1,6 +1,7 @@
-/* Compact horizontal system-health strip below the header. */
+/* Compact horizontal system-health strip. Visual + flex layout for items. */
 .health-bar {
-  min-height: 34px;
+  min-height: 32px;
+  flex-shrink: 0;
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -13,10 +14,10 @@
 
 .health-lead {
   display: flex;
-  min-width: 205px;
+  min-width: 180px;
   align-items: center;
   gap: 10px;
-  padding: 7px 14px;
+  padding: 5px 12px;
   border-right: 1px solid var(--border);
 }
 
@@ -27,42 +28,56 @@
   gap: 8px;
 }
 
-.health-lead strong { font-family: var(--font-display); font-size: 11px; text-transform: uppercase; }
-.health-lead div span { color: var(--success); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.health-lead strong {
+  font-family: var(--font-display);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.health-lead div span {
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
 
 .health-item {
   display: flex;
-  min-width: 145px;
+  min-width: 120px;
   flex-direction: column;
   justify-content: center;
-  padding: 5px 14px;
+  padding: 4px 12px;
   border-right: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 }
 
-.health-item span { color: var(--muted-foreground); font-size: 9px; text-transform: uppercase; }
-.health-item strong { color: var(--success); font-size: 13px; font-variant-numeric: tabular-nums; }
+.health-item span {
+  color: var(--muted-foreground);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.health-item strong {
+  color: var(--success);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
 
 .health-links {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 14px;
+  gap: 12px;
+  padding: 0 12px;
   color: var(--muted-foreground);
   font-size: 10px;
 }
 
-.health-links span { display: flex; align-items: center; gap: 5px; }
-
-@media (max-width: 1399px) {
-  .health-item { min-width: 120px; }
-  .health-links { gap: 8px; }
+.health-links span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 @media (max-width: 1100px) {
-  .health-links { display: none; }
-}
-
-@media (max-width: 760px) {
-  .health-bar { overflow-x: auto; }
+  .health-links {
+    display: none;
+  }
 }
