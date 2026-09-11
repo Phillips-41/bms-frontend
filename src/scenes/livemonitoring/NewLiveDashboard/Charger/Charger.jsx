@@ -5,7 +5,6 @@ import StatusDot from "../common/StatusDot/StatusDot";
 import { charger } from "../../data/dashboardData";
 import "./Charger.css";
 
-// Maps the backend charger state to a label and an indicator colour.
 const STATE = {
   charging: { label: "Charging", dot: "ok" },
   idle: { label: "Idle", dot: "warn" },

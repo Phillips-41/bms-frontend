@@ -22,12 +22,19 @@ export default function StateOfCharge() {
         variant="determinate"
         value={soc}
         className="progress-track"
-        sx={{ "& .MuiLinearProgress-bar": { backgroundColor: "var(--primary)" } }}
+        sx={{
+          flexShrink: 0,
+          "& .MuiLinearProgress-bar": { backgroundColor: "var(--primary)" },
+        }}
       />
 
       <Box className="soc-footer">
-        <span>SOC <b>{soc}%</b></span>
-        <span>DOD <b>{dod}%</b></span>
+        <span>
+          SOC <b>{soc}%</b>
+        </span>
+        <span>
+          DOD <b>{dod}%</b>
+        </span>
       </Box>
     </Surface>
   );

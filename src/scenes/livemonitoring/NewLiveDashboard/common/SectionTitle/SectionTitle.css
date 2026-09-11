@@ -5,7 +5,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 9px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .section-heading .section-heading-main {
@@ -41,6 +42,14 @@
   white-space: nowrap;
 }
 
-@media (max-width: 1399px) {
-  .section-heading { margin-bottom: 6px; }
+.alarm-count {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--success) 10%, transparent);
+  color: var(--success);
+  font-size: 8px;
+  font-weight: 800;
 }
