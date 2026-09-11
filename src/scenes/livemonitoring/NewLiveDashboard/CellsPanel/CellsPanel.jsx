@@ -4,7 +4,7 @@ import StatusDot from "../common/StatusDot/StatusDot";
 import { cells, cellsSummary } from "../../data/dashboardData";
 import "./CellsPanel.css";
 
-/** One compact cell card: number, status dot, dominant voltage, temp, SG. */
+/** One compact cell row: ID + status · voltage · temp · SG on a single line. */
 function CellRow({ index, voltage, temperature, gravity }) {
   const id = `C${String(index + 1).padStart(2, "0")}`;
   return (
@@ -26,14 +26,16 @@ function CellRow({ index, voltage, temperature, gravity }) {
   );
 }
 
-/** CellsPanel — the fixed-width left rail listing all 15 battery cells. */
+/** CellsPanel — fixed-width left rail listing all 15 battery cells. */
 export default function CellsPanel() {
   return (
     <Surface className="cells-panel">
       <Box className="cells-header">
         <div>
           <h2>Battery cells</h2>
-          <p>{cellsSummary.normal} / {cellsSummary.total} normal</p>
+          <p>
+            {cellsSummary.normal} / {cellsSummary.total} normal
+          </p>
         </div>
         <span className="healthy-tag">
           <StatusDot as="i" status="ok" small /> Healthy

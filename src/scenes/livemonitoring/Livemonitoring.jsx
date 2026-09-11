@@ -1,10 +1,9 @@
-import { Grid, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
 import { useContext } from "react";
 import { tokens } from "../../theme";
 import { AppContext } from "../../services/AppContext";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import CheckIcon from "@mui/icons-material/Check";
 
@@ -42,9 +41,16 @@ const Livemonitoring = () => {
 export default Livemonitoring;
 
 /**
- * Dashboard — fills the remaining outlet height.
- * Header + HealthBar take intrinsic height; the main grid (cells + operations)
- * expands with flex:1 / minHeight:0 so nothing overflows or scrolls on desktop.
+ * Layout (desktop):
+ *  [ Cells panel ] | [ Middle operations ] | [ Alarms vertical rail ]
+ *
+ * Middle rows (top → bottom):
+ *  1. LiveBattery + StateOfCharge  (compact)
+ *  2. Charger                      (full middle width)
+ *  3. Cumulative + Cycles
+ *  4. Chart + Chart
+ *
+ * Height is shared with fr + minmax floors so nothing scrolls and text stays readable.
  */
 function Dashboard() {
   return (
@@ -76,11 +82,10 @@ function Dashboard() {
           boxSizing: "border-box",
         }}
       >
-        {/* Fixed-height chrome */}
         <Header />
         <HealthBar />
 
-        {/* Main body — takes all remaining height */}
+        {/* 3-column body: cells | middle | alarms */}
         <Box
           sx={{
             display: "grid",
@@ -88,15 +93,15 @@ function Dashboard() {
             flex: 1,
             gridTemplateColumns: {
               xs: "1fr",
-              md: "180px minmax(0, 1fr)",
-              lg: "200px minmax(0, 1fr)",
-              xl: "220px minmax(0, 1fr)",
+              md: "170px minmax(0, 1fr) 150px",
+              lg: "190px minmax(0, 1fr) 170px",
+              xl: "210px minmax(0, 1fr) 190px",
             },
             gap: { xs: "4px", md: "5px", lg: "6px" },
             overflow: "hidden",
           }}
         >
-          {/* Left rail — cells list fills height */}
+          {/* Left — cells */}
           <Box
             sx={{
               minHeight: 0,
@@ -108,7 +113,7 @@ function Dashboard() {
             <CellsPanel />
           </Box>
 
-          {/* Right operations grid — shares remaining height via fr rows */}
+          {/* Middle — operations (4 rows) */}
           <Box
             sx={{
               display: "grid",
@@ -122,9 +127,10 @@ function Dashboard() {
               },
               gridTemplateRows: {
                 xs: "auto",
-                md: "minmax(0, 0.28fr) minmax(0, 0.14fr) minmax(0, 0.26fr) minmax(0, 0.22fr) minmax(0, 0.1fr)",
+                // Live/SOC compact | Charger | Cumulative+Cycles | Charts
+                md: "minmax(64px, 0.18fr) minmax(52px, 0.14fr) minmax(90px, 0.34fr) minmax(100px, 0.34fr)",
               },
-              gap: { xs: "4px", md: "4px", lg: "5px" },
+              gap: { xs: "4px", md: "5px", lg: "6px" },
             }}
           >
             <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
@@ -133,15 +139,18 @@ function Dashboard() {
             <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
               <StateOfCharge />
             </Box>
+
             <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" }, minHeight: 0, overflow: "hidden" }}>
               <Charger />
             </Box>
+
             <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
               <Cumulative />
             </Box>
             <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
               <Cycles />
             </Box>
+
             <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
               <BarChart
                 title="Discharge current"
@@ -160,9 +169,18 @@ function Dashboard() {
                 ]}
               />
             </Box>
-            <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" }, minHeight: 0, overflow: "hidden" }}>
-              <Alarms />
-            </Box>
+          </Box>
+
+          {/* Right — vertical Alarms rail (full height of body) */}
+          <Box
+            sx={{
+              minHeight: 0,
+              height: "100%",
+              overflow: "hidden",
+              display: { xs: "none", md: "block" },
+            }}
+          >
+            <Alarms />
           </Box>
         </Box>
       </Box>
@@ -187,18 +205,19 @@ function Cumulative() {
         sx={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: "2px 7px",
+          gap: "4px 10px",
           m: 0,
-          height: "100%",
           minHeight: 0,
+          flex: 1,
           overflow: "hidden",
+          alignContent: "start",
           "& div": {
             display: "flex",
             justifyContent: "space-between",
-            gap: "6px",
-            pb: "2px",
+            gap: "8px",
+            pb: "3px",
             borderBottom: "1px solid color-mix(in oklab, var(--border) 65%, transparent)",
-            fontSize: "6px",
+            fontSize: "10px",
           },
           "& dt": { color: "var(--muted-foreground)" },
           "& dd": { m: 0, fontWeight: 700, fontVariantNumeric: "tabular-nums" },
@@ -229,16 +248,15 @@ function BarChart({ title, bars }) {
           justifyContent: "space-around",
           gap: "8px",
           px: "6%",
-          pt: "8px",
+          pt: "6px",
           borderBottom: "1px solid var(--border)",
-          height: "100%",
           overflow: "hidden",
         }}
       >
         <Box
           sx={{
             position: "absolute",
-            inset: "8px 0 10px",
+            inset: "6px 0 12px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -265,18 +283,18 @@ function BarChart({ title, bars }) {
               flexDirection: "column",
               justifyContent: "flex-end",
               "& b": {
-                mt: "2px",
+                mt: "3px",
                 color: "var(--muted-foreground)",
-                fontSize: "6px",
+                fontSize: "10px",
               },
             }}
           >
             <Box
               component="span"
               sx={{
-                mb: "2px",
+                mb: "3px",
                 color: "var(--foreground)",
-                fontSize: "6px",
+                fontSize: "10px",
                 fontWeight: 700,
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -288,7 +306,7 @@ function BarChart({ title, bars }) {
                 tabIndex={0}
                 sx={{
                   position: "relative",
-                  width: "min(40px, 75%)",
+                  width: "min(44px, 75%)",
                   minHeight: "4px",
                   height: `${bar.height}%`,
                   borderRadius: "3px 3px 0 0",
@@ -311,52 +329,87 @@ function BarChart({ title, bars }) {
   );
 }
 
+/** Vertical alarms rail — full height of the main body, rightmost column. */
 function Alarms() {
   return (
-    <Surface className="alarms-card">
+    <Surface
+      className="alarms-card"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <SectionTitle aside={<span className="alarm-count">0</span>}>Active alarms</SectionTitle>
+
       <Stack
-        direction="row"
+        spacing={1}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          height: "100%",
+          flex: 1,
           minHeight: 0,
+          overflow: "auto",
+          alignItems: "stretch",
+          justifyContent: "flex-start",
+          py: 0.5,
         }}
       >
+        {/* Empty / normal state */}
         <Box
           sx={{
-            display: "grid",
-            width: 20,
-            height: 20,
-            placeItems: "center",
-            borderRadius: "50%",
-            background: "color-mix(in oklab, var(--success) 10%, transparent)",
-            color: "var(--success)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            flex: 1,
+            textAlign: "center",
+            px: 1,
           }}
         >
-          <CheckIcon sx={{ fontSize: 18 }} />
-        </Box>
-        <Box>
+          <Box
+            sx={{
+              display: "grid",
+              width: 36,
+              height: 36,
+              placeItems: "center",
+              borderRadius: "50%",
+              background: "color-mix(in oklab, var(--success) 12%, transparent)",
+              color: "var(--success)",
+            }}
+          >
+            <CheckIcon sx={{ fontSize: 22 }} />
+          </Box>
           <Box
             component="strong"
             sx={{
               fontFamily: "var(--font-display)",
-              fontSize: "7px",
+              fontSize: "11px",
               textTransform: "uppercase",
+              letterSpacing: "0.04em",
             }}
           >
             System normal
           </Box>
           <Box
             component="p"
-            sx={{ m: "1px 0 0", color: "var(--muted-foreground)", fontSize: "6px" }}
+            sx={{
+              m: 0,
+              color: "var(--muted-foreground)",
+              fontSize: "10px",
+              lineHeight: 1.35,
+            }}
           >
             No active alarms detected
           </Box>
         </Box>
+
+        {/* When alarms exist, map them here as vertical list items, e.g.:
+            {alarms.map(a => (
+              <Box key={a.id} sx={{ p: 1, borderRadius: 1, border: "1px solid ...", fontSize: 11 }}>
+                ...
+              </Box>
+            ))}
+        */}
       </Stack>
     </Surface>
   );
@@ -370,31 +423,32 @@ function Cycles() {
         sx={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: "6px",
-          height: "100%",
+          gap: "8px",
           minHeight: 0,
+          flex: 1,
           overflow: "hidden",
           "& > div + div": {
-            pl: "6px",
+            pl: "8px",
             borderLeft: "1px solid var(--border)",
           },
           "& h3": {
-            m: "0 0 2px",
+            m: "0 0 4px",
             color: "var(--primary)",
-            fontSize: "6px",
-            letterSpacing: ".08em",
+            fontSize: "10px",
+            letterSpacing: ".06em",
             textTransform: "uppercase",
           },
           "& p": {
             display: "flex",
             justifyContent: "space-between",
-            m: "2px 0",
+            m: "4px 0",
             color: "var(--muted-foreground)",
-            fontSize: "6px",
+            fontSize: "10px",
           },
           "& b": {
             color: "var(--foreground)",
-            fontSize: "8px",
+            fontSize: "12px",
+            fontVariantNumeric: "tabular-nums",
           },
         }}
       >

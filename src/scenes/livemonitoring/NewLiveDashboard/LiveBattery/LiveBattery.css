@@ -1,14 +1,15 @@
-/* Live battery status: three dominant metric tiles. Visual only. */
+/* Compact live metrics — smaller than before so row can stay short. */
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
+  gap: 6px;
   min-height: 0;
   flex: 1;
+  align-content: center;
 }
 
 .metric {
-  padding: 8px 9px;
+  padding: 4px 6px;
   border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
   border-radius: 6px;
   background: color-mix(in oklab, var(--card) 68%, transparent);
@@ -23,15 +24,15 @@
 
 .metric strong {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px;
   font-family: var(--font-display);
-  font-size: 22px;
-  line-height: 1;
+  font-size: 16px;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
 .metric small {
-  margin-left: 3px;
+  margin-left: 2px;
   color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 600;
@@ -39,6 +40,6 @@
 
 @media (max-width: 1399px) {
   .metric strong {
-    font-size: 19px;
+    font-size: 14px;
   }
 }
