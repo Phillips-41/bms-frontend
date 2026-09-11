@@ -6,6 +6,9 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import CheckIcon from "@mui/icons-material/Check";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import CellsPanel from "./NewLiveDashboard/CellsPanel/CellsPanel";
 import StateOfCharge from "./NewLiveDashboard/StateOfCharge/StateOfCharge";
@@ -15,6 +18,7 @@ import Header from "./NewLiveDashboard/Header/Header";
 import HealthBar from "./NewLiveDashboard/HealthBar/HealthBar";
 import Surface from "./NewLiveDashboard/common/Surface/Surface";
 import SectionTitle from "./NewLiveDashboard/common/SectionTitle/SectionTitle";
+import { alarms as mockAlarms } from "./data/dashboardData";
 
 const Livemonitoring = () => {
   const theme = useTheme();
@@ -40,18 +44,6 @@ const Livemonitoring = () => {
 
 export default Livemonitoring;
 
-/**
- * Layout (desktop):
- *  [ Cells panel ] | [ Middle operations ] | [ Alarms vertical rail ]
- *
- * Middle rows (top → bottom):
- *  1. LiveBattery + StateOfCharge  (compact)
- *  2. Charger                      (full middle width)
- *  3. Cumulative + Cycles
- *  4. Chart + Chart
- *
- * Height is shared with fr + minmax floors so nothing scrolls and text stays readable.
- */
 function Dashboard() {
   return (
     <Box
@@ -85,7 +77,6 @@ function Dashboard() {
         <Header />
         <HealthBar />
 
-        {/* 3-column body: cells | middle | alarms */}
         <Box
           sx={{
             display: "grid",
@@ -93,15 +84,14 @@ function Dashboard() {
             flex: 1,
             gridTemplateColumns: {
               xs: "1fr",
-              md: "170px minmax(0, 1fr) 150px",
-              lg: "190px minmax(0, 1fr) 170px",
-              xl: "210px minmax(0, 1fr) 190px",
+              md: "200px minmax(0, 1fr) 168px",
+              lg: "220px minmax(0, 1fr) 180px",
+              xl: "240px minmax(0, 1fr) 200px",
             },
             gap: { xs: "4px", md: "5px", lg: "6px" },
             overflow: "hidden",
           }}
         >
-          {/* Left — cells */}
           <Box
             sx={{
               minHeight: 0,
@@ -113,7 +103,6 @@ function Dashboard() {
             <CellsPanel />
           </Box>
 
-          {/* Middle — operations (4 rows) */}
           <Box
             sx={{
               display: "grid",
@@ -127,7 +116,6 @@ function Dashboard() {
               },
               gridTemplateRows: {
                 xs: "auto",
-                // Live/SOC compact | Charger | Cumulative+Cycles | Charts
                 md: "minmax(64px, 0.18fr) minmax(52px, 0.14fr) minmax(90px, 0.34fr) minmax(100px, 0.34fr)",
               },
               gap: { xs: "4px", md: "5px", lg: "6px" },
@@ -171,7 +159,6 @@ function Dashboard() {
             </Box>
           </Box>
 
-          {/* Right — vertical Alarms rail (full height of body) */}
           <Box
             sx={{
               minHeight: 0,
@@ -180,7 +167,7 @@ function Dashboard() {
               display: { xs: "none", md: "block" },
             }}
           >
-            <Alarms />
+            <Alarms items={mockAlarms} />
           </Box>
         </Box>
       </Box>
@@ -329,8 +316,31 @@ function BarChart({ title, bars }) {
   );
 }
 
-/** Vertical alarms rail — full height of the main body, rightmost column. */
-function Alarms() {
+const SEVERITY_STYLE = {
+  critical: {
+    color: "var(--destructive)",
+    bg: "color-mix(in oklab, var(--destructive) 12%, transparent)",
+    border: "color-mix(in oklab, var(--destructive) 30%, transparent)",
+    Icon: ErrorOutlineIcon,
+  },
+  warning: {
+    color: "#b45309",
+    bg: "color-mix(in oklab, #f59e0b 14%, transparent)",
+    border: "color-mix(in oklab, #f59e0b 32%, transparent)",
+    Icon: WarningAmberIcon,
+  },
+  info: {
+    color: "var(--primary)",
+    bg: "color-mix(in oklab, var(--primary) 10%, transparent)",
+    border: "color-mix(in oklab, var(--primary) 28%, transparent)",
+    Icon: InfoOutlinedIcon,
+  },
+};
+
+/** Vertical alarms rail — lists dynamic active alarms from API/mock. */
+function Alarms({ items = [] }) {
+  const count = items.length;
+
   return (
     <Surface
       className="alarms-card"
@@ -340,20 +350,11 @@ function Alarms() {
         height: "100%",
       }}
     >
-      <SectionTitle aside={<span className="alarm-count">0</span>}>Active alarms</SectionTitle>
+      <SectionTitle aside={<span className="alarm-count">{count}</span>}>
+        Active alarms
+      </SectionTitle>
 
-      <Stack
-        spacing={1}
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflow: "auto",
-          alignItems: "stretch",
-          justifyContent: "flex-start",
-          py: 0.5,
-        }}
-      >
-        {/* Empty / normal state */}
+      {count === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -362,6 +363,7 @@ function Alarms() {
             justifyContent: "center",
             gap: 1,
             flex: 1,
+            minHeight: 0,
             textAlign: "center",
             px: 1,
           }}
@@ -402,15 +404,53 @@ function Alarms() {
             No active alarms detected
           </Box>
         </Box>
-
-        {/* When alarms exist, map them here as vertical list items, e.g.:
-            {alarms.map(a => (
-              <Box key={a.id} sx={{ p: 1, borderRadius: 1, border: "1px solid ...", fontSize: 11 }}>
-                ...
+      ) : (
+        <Stack
+          spacing={0.75}
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            pr: 0.25,
+          }}
+        >
+          {items.map((alarm) => {
+            const sev = SEVERITY_STYLE[alarm.severity] ?? SEVERITY_STYLE.info;
+            const Icon = sev.Icon;
+            return (
+              <Box
+                key={alarm.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 0.75,
+                  px: 0.75,
+                  py: 0.6,
+                  borderRadius: "6px",
+                  border: `1px solid ${sev.border}`,
+                  background: sev.bg,
+                  minWidth: 0,
+                }}
+              >
+                <Icon sx={{ fontSize: 14, color: sev.color, mt: "1px", flexShrink: 0 }} />
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                    color: "var(--foreground)",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {alarm.label}
+                </Box>
               </Box>
-            ))}
-        */}
-      </Stack>
+            );
+          })}
+        </Stack>
+      )}
     </Surface>
   );
 }

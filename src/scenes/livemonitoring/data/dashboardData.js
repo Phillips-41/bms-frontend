@@ -43,23 +43,22 @@ export const cellsSummary = {
 /**
  * Cascading location hierarchy for the Header filters.
  * Shape: state → zone → circle → subDivision → substation[]
- * Replace with API responses later.
  */
 export const locationHierarchy = {
   Maharashtra: {
     Jalgaon: {
       Jalgaon: {
         "AMALNER-II": ["33/11 KV Amalner", "33/11 KV Chopda", "11 KV Dharangaon"],
-        "BHUSAWAL": ["33/11 KV Bhusawal", "11 KV Deepnagar"],
+        BHUSAWAL: ["33/11 KV Bhusawal", "11 KV Deepnagar"],
       },
-      "Muktainagar": {
-        "MUKTAINAGAR": ["33/11 KV Muktainagar", "11 KV Kurha"],
+      Muktainagar: {
+        MUKTAINAGAR: ["33/11 KV Muktainagar", "11 KV Kurha"],
       },
     },
     Nagpur: {
       Nagpur: {
         "NAGPUR URBAN": ["33/11 KV Civil Lines", "11 KV Sitabuldi"],
-        "KAMPTEE": ["33/11 KV Kamptee"],
+        KAMPTEE: ["33/11 KV Kamptee"],
       },
     },
     Pune: {
@@ -101,12 +100,11 @@ export const health = {
   items: [
     ["Cells", "15/15"],
     ["Communication", "15/15"],
-    ["Active alarms", "0"],
+    ["Active alarms", "4"],
   ],
   subsystems: ["BMS", "Charger", "Thermal"],
 };
 
-/** Live battery status: [label, value, unit] */
 export const liveMetrics = [
   ["Voltage", "32.81", "V"],
   ["Current", "0", "A"],
@@ -116,7 +114,7 @@ export const liveMetrics = [
 export const stateOfCharge = { soc: 100, dod: 0 };
 
 export const charger = {
-  status: "charging", // "charging" | "idle" | "fault"
+  status: "charging",
   readings: [
     ["AC voltage", "243.97 V"],
     ["AC current", "1.11 A"],
@@ -149,5 +147,42 @@ export const ampereHourChart = [
   { label: "Ah Out", value: "0.445", height: 22 },
 ];
 
-/** Only backend-raised alarms belong here. Empty array = system normal. */
-export const alarms = [];
+/**
+ * Active alarms from API (dynamic — usually only a few at once).
+ * severity: "critical" | "warning" | "info"
+ * Items marked with "!" on the device side map to critical.
+ * "… Normal" statuses are omitted here; only raised/active conditions belong in this list.
+ */
+export const alarms = [
+  { id: "dc_voltage_high", label: "DC Voltage High", severity: "critical" },
+  { id: "string_voltage_high", label: "String voltage High", severity: "critical" },
+  { id: "battery_high", label: "Battery High", severity: "warning" },
+  { id: "charger_trip", label: "Charger Trip", severity: "critical" },
+  { id: "battery_charging", label: "Battery charging", severity: "info" },
+  { id: "charger_load", label: "Charger Load", severity: "info" },
+  { id: "buzzer_off", label: "Buzzer off", severity: "info" },
+];
+
+/** Full catalog of alarm names the API may return (reference only). */
+export const alarmCatalog = [
+  "Battery charging",
+  "DC Voltage High",
+  "Cell Commun Normal",
+  "Battery High",
+  "String voltage High",
+  "String current Normal",
+  "Ambient Temp Normal",
+  "SOC Normal",
+  "Charger Load",
+  "Input Mains Normal",
+  "Input phase Normal",
+  "AC Voltage Normal",
+  "Charger Trip",
+  "Output Mccb Normal",
+  "Input Fuse Normal",
+  "Rectifier fuse Normal",
+  "Filter Fuse Normal",
+  "Output Fuse Normal",
+  "Alarm Supply Fuse Normal",
+  "Buzzer off",
+];

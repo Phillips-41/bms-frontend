@@ -4,17 +4,16 @@ import StatusDot from "../common/StatusDot/StatusDot";
 import { cells, cellsSummary } from "../../data/dashboardData";
 import "./CellsPanel.css";
 
-/** Display labels + CSS modifier for each cell status. */
+/** Short chip label + full title for tooltip. */
 const STATUS_META = {
-  normal: { label: "Normal", className: "status-normal" },
-  high_voltage: { label: "High V", className: "status-high-v" },
-  high_temperature: { label: "High Temp", className: "status-high-temp" },
-  low_voltage: { label: "Low V", className: "status-low-v" },
-  about_to_die: { label: "About to die", className: "status-die" },
-  open_battery: { label: "Open battery", className: "status-open" },
+  normal: { label: "OK", full: "Normal", className: "status-normal", dot: "ok" },
+  high_voltage: { label: "High V", full: "High voltage", className: "status-high-v", dot: "warn" },
+  high_temperature: { label: "High T", full: "High temperature", className: "status-high-temp", dot: "warn" },
+  low_voltage: { label: "Low V", full: "Low voltage", className: "status-low-v", dot: "warn" },
+  about_to_die: { label: "Die", full: "About to die", className: "status-die", dot: "fault" },
+  open_battery: { label: "Open", full: "Open battery", className: "status-open", dot: "fault" },
 };
 
-/** One compact cell row: ID · voltage · temp · colored status chip. */
 function CellRow({ index, voltage, temperature, status }) {
   const id = `C${String(index + 1).padStart(2, "0")}`;
   const meta = STATUS_META[status] ?? STATUS_META.normal;
@@ -23,22 +22,16 @@ function CellRow({ index, voltage, temperature, status }) {
     <Box
       className="cell-row"
       tabIndex={0}
-      title={`Cell ${id}: ${voltage.toFixed(3)} V, ${temperature}°C, ${meta.label}`}
+      title={`${id}: ${voltage.toFixed(3)} V · ${temperature}°C · ${meta.full}`}
     >
-      <Box className="cell-top">
-        <strong>{id}</strong>
-        <StatusDot status={status === "normal" ? "ok" : status === "about_to_die" || status === "open_battery" ? "fault" : "warn"} small />
-      </Box>
-      <Box className="cell-values">
-        <b>{voltage.toFixed(3)} V</b>
-        <span>{temperature}°C</span>
-        <span className={`cell-status-chip ${meta.className}`}>{meta.label}</span>
-      </Box>
+      <span className="cell-id">{id}</span>
+      <span className="cell-v">{voltage.toFixed(3)} V</span>
+      <span className="cell-t">{temperature}°</span>
+      <span className={`cell-status-chip ${meta.className}`}>{meta.label}</span>
     </Box>
   );
 }
 
-/** CellsPanel — fixed-width left rail listing all 15 battery cells. */
 export default function CellsPanel() {
   return (
     <Surface className="cells-panel">
@@ -49,9 +42,7 @@ export default function CellsPanel() {
             {cellsSummary.normal} / {cellsSummary.total} normal
           </p>
         </div>
-        <span className="healthy-tag">
-          <StatusDot as="i" status="ok" small /> Healthy
-        </span>
+        <span className="healthy-tag">Healthy</span>
       </Box>
 
       <Box className="cells-list">
@@ -67,7 +58,7 @@ export default function CellsPanel() {
       </Box>
 
       <Box className="cells-footer">
-        <span>Average {cellsSummary.average}</span>
+        <span>Avg {cellsSummary.average}</span>
         <span>{cellsSummary.delta}</span>
       </Box>
     </Surface>
