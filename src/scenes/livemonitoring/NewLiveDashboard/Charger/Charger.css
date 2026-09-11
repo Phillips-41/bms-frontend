@@ -1,0 +1,39 @@
+/* Charger information: full-width row of four AC readings + status chip. */
+.charger-card { grid-column: 1 / -1; }
+.charger-card .section-heading { margin-bottom: 6px; }
+
+.charger-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.charger-state.charging { background: color-mix(in oklab, var(--success) 8%, transparent); color: var(--success); }
+.charger-state.idle { background: color-mix(in oklab, var(--muted-foreground) 8%, transparent); color: var(--muted-foreground); }
+.charger-state.fault { background: color-mix(in oklab, var(--destructive) 8%, transparent); color: var(--destructive); }
+
+.charger-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+
+.charger-grid > div { padding: 2px 13px; border-right: 1px solid var(--border); }
+.charger-grid > div:first-child { padding-left: 0; }
+.charger-grid > div:last-child { border: 0; }
+
+.charger-grid span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.charger-grid strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}

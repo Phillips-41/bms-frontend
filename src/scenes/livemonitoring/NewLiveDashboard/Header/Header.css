@@ -1,0 +1,114 @@
+/* Top bar: hierarchy filters (left) + device status cluster (right). */
+.top-header {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: color-mix(in oklab, var(--card) 94%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  border-radius: var(--radius);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(14px);
+}
+
+.filter-row,
+.header-status {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.select-wrap { position: relative; min-width: 0; }
+
+.select-wrap select {
+  height: 32px;
+  max-width: 130px;
+  appearance: none;
+  border: 0;
+  border-radius: 5px;
+  background: var(--muted);
+  color: var(--foreground);
+  padding: 0 25px 0 9px;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+}
+
+.select-wrap svg {
+  position: absolute;
+  top: 10px;
+  right: 7px;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+
+.search-box {
+  display: flex;
+  width: 128px;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0 8px;
+  color: var(--muted-foreground);
+}
+
+.search-box input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 11px;
+  color: var(--foreground);
+}
+
+.live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.device-id {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.header-status time {
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.connection-icon { flex-shrink: 0; color: var(--success); }
+
+@media (max-width: 1399px) {
+  .top-header { gap: 7px; padding: 5px 7px; }
+  .select-wrap select { max-width: 108px; padding-left: 7px; }
+  .header-status { gap: 4px; }
+  .search-box { width: 108px; }
+}
+
+@media (max-width: 1100px) {
+  .top-header { grid-template-columns: 1fr; }
+  .header-status { justify-content: space-between; }
+}
+
+@media (max-width: 760px) {
+  .top-header { overflow-x: auto; }
+  .filter-row,
+  .header-status { min-width: max-content; }
+}

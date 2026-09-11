@@ -1,0 +1,290 @@
+import React,{useContext} from 'react'
+import { tokens } from '../theme';
+
+import { Typography, Grid, Box,Tooltip ,useTheme,Paper } from '@mui/material';
+import chargerIcon from '../enums/portable-charger.png';
+
+import PowerIcon from "@mui/icons-material/Power"; // Voltage icon
+import BoltIcon from "@mui/icons-material/Bolt"; // Current icon
+import ThermostatIcon from "@mui/icons-material/Thermostat"; // Temperature icon
+import BatteryFullIcon from "@mui/icons-material/BatteryFull"; // Energy icon
+
+import BatteryState from './BatteryState'
+import VoltageVisualizations from './SineWave';
+import Energycard from './EnergyCard';
+import Charger from './Charger';
+import { AppContext } from '../services/AppContext';
+
+const InstantNCharger = () => {
+
+   const {
+
+      data,
+
+      charger,
+
+    }=useContext(AppContext)
+  const device = data[0];
+  if (!device || !charger[0]) return <div></div>;
+const{instantaneousCurrent, stringvoltage,ambientTemperature, bmsAlarmsDTO,socLatestValueForEveryCycle,dodLatestValueForEveryCycle}=device
+
+ const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const{acVoltage,acCurrent ,frequency ,energy}=charger[0];
+  const {
+    stringVoltageLNH, 
+    stringCurrentHN, ambientTemperatureHN, socLN// String Current
+  } = bmsAlarmsDTO;
+
+      const [voltages, setVoltages] = React.useState({
+        ac: {
+          value: acVoltage,
+          min: 220,
+          max: 280,
+          frequency: frequency,
+          current: acCurrent
+        },
+      
+      });
+      // Create sine wave points for AC visualization
+      // const createSineWave = () => {
+      //   const points = [];
+      //   const steps = 200; // Increase steps for a smoother wave
+      //   const amplitude = 40;
+      //   const wavelength = 75; // Set wavelength equal to the animation offset
+        
+      //   for (let i = 0; i <= steps; i++) {
+      //     const x = (i / steps) * 400; // Extend beyond 300 for seamless animation
+      //     const y = 50 + amplitude * Math.sin((i / steps) * Math.PI * 4);
+      //     points.push(`${x},${y}`);
+      //   }
+      
+      //   return points.join(' ');
+      // };
+
+      // const getSineWaveColor=()=>{
+      //   return acVoltage/100<200 ? "blue": voltage/100>260? "red" :"green"
+      // }
+      const [Idata, setIdata] = React.useState({
+        voltage: {
+          value: stringvoltage,
+          unit: "V",
+          threshold: {
+            normal: { min: 220, max: 240 },
+            warning: { min: 210, max: 250 },
+            critical: { min: 0, max: 210 },
+          },
+        },
+        current: {
+          value: instantaneousCurrent,
+          unit: "A",
+          threshold: {
+            normal: { min: 8, max: 12 },
+            warning: { min: 6, max: 14 },
+            critical: { min: 0, max: 6 },
+          },
+        },
+        temperature: {
+          value: ambientTemperature,
+          unit: "°C",
+          threshold: {
+            normal: { min: 20, max: 50 },
+            warning: { min: 10, max: 60 },
+            critical: { min: 0, max: 10 },
+          },
+        },
+      });
+    
+      // Function to determine icon color based on thresholds
+      const getIconColor = (value) => {
+        if (value) {
+          return   "rgb(183, 28, 28)"; // Normal range
+        } else {
+          return "rgb(27, 94, 32)";;
+        }
+      };
+
+  
+      const getColorForDCV=(value)=>{
+        if(value===0){
+          return "rgb(183, 28, 28)";
+        }else if(value===1){
+          return "rgb(27, 94, 32)";
+        }else{
+          return "rgb(183, 28, 28)";
+        }
+      }
+      return (
+        <Box sx={{ p: 0 }}>
+            <Grid container spacing={1}>
+              {/* Battery State Paper */}
+              <Grid item xs={12} sm={6} md={2.5}>
+              <Paper elevation={8} sx={{ height: "150px", display: "flex", flexDirection: "column", p: 1 }}>
+                <Box display="flex" justifyContent="center">
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold", fontSize:{ xs: '0.75rem', sm: '0.875rem', md: '1rem',lg: '0.8rem',xl:'1rem'} }}>
+                    State of Charge
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ 
+                  display: 'flex',
+                  justifyContent: 'center', // This pushes battery and labels to opposite ends
+                  alignItems: 'center',
+                  flexGrow: 1, // Takes remaining space
+                
+                }}>
+                  <Box sx={{ flexShrink: 0 }}>
+                    <BatteryState socValue={socLatestValueForEveryCycle} socState={socLN} />
+                  </Box>
+                  
+                  <Box sx={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'auto auto',
+                    columnGap: 1,
+                    rowGap: 0,
+                    alignItems: 'center'
+                  }}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold", textAlign: "right", minWidth: '50px' }}>
+                      SOC:
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      {socLatestValueForEveryCycle}%
+                    </Typography>
+                    
+                    <Typography variant="body1" sx={{ fontWeight: "bold", textAlign: "right", minWidth: '50px' }}>
+                      DOD:
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      {dodLatestValueForEveryCycle}%
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+              </Grid>
+              {/* String Paper */}
+              <Grid item xs={12} sm={6} md={2}>
+                <Paper elevation={8} sx={{ height: "150px",  display: "flex", flexDirection: "column", justifyContent: "space-between", p: 1 }}>
+                  <Box>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold",textAlign:"center",fontSize:{ xs: '0.75rem', sm: '0.875rem', md: '1rem',lg: '0.8rem',xl:'1rem'} }}>
+                      Instantaneous Info
+                    </Typography>
+                    <Grid container spacing={1} alignItems="center" justifyContent="center">
+                      {/* Voltage Section */}
+                      <Grid item xs={4}>
+                        <Box 
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            textAlign: "center",
+                            pt: 2
+                          }}
+                        >
+                          <Tooltip title="String Voltage" arrow> {/* Add Tooltip for Voltage */}
+                            <PowerIcon
+                              sx={{
+                                fontSize: "2rem",
+                                color: getColorForDCV(stringVoltageLNH) 
+                              }}
+                            />
+                          </Tooltip>
+                          <Typography variant="h7" sx={{ mt: 1 ,fontWeight: "bold"}}>
+                            {stringvoltage} {Idata.voltage.unit}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      {/* Current Section */}
+                      <Grid item xs={4}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            textAlign: "center",
+                            pt: 2
+                          }}
+                        >
+                          <Tooltip title="String Current" arrow> {/* Add Tooltip for Current */}
+                            <BoltIcon
+                              sx={{
+                                fontSize: "2rem",
+                                color: getIconColor(stringCurrentHN)
+                              }}
+                            />
+                          </Tooltip>
+                          <Typography variant="h7" sx={{ mt: 1,fontWeight: "bold" }}>
+                            {instantaneousCurrent} {Idata.current.unit}
+                          </Typography>
+                        </Box>
+                      </Grid>
+
+                      {/* Temperature Section */}
+                      <Grid item xs={4}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            textAlign: "center",
+                            pt: 2
+                          }}
+                        >
+                          <Tooltip title="Ambient Temperature" arrow> {/* Add Tooltip for Temperature */}
+                            <ThermostatIcon
+                              sx={{
+                                fontSize: "2rem",
+                                color: getIconColor(ambientTemperatureHN)
+                              }}
+                            />
+                          </Tooltip>
+                          <Typography variant="h7" sx={{ mt: 1 ,fontWeight: "bold"}}>
+                            {ambientTemperature} {Idata.temperature.unit}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Paper>
+              </Grid>
+              
+              {/* Energy Paper */}
+              <Grid item xs={12} sm={6} md={2.5}>
+               
+                  <Box><VoltageVisualizations 
+     
+                  /></Box>    
+              </Grid>
+          
+                <Grid item  xs={12} sm={6} md={2.5}>
+               
+                    <Energycard />
+                
+                </Grid>
+                {/* AC Voltage Paper */}
+              <Grid item xs={12} sm={6} md={2.5}>
+                <Paper elevation={8} sx={{ height: "150px",  display: "flex", flexDirection: "column", justifyContent: "space-between", p: 1 }}>
+                 
+                 <Charger charger={ charger}/>
+                </Paper>
+              </Grid>
+                {/* Add more grid items as needed */}
+            </Grid>
+
+            <style>
+              {`
+                @keyframes translateWave {
+                  0% {
+                    transform: translateX(0);
+                  }
+                  100% {
+                    transform: translateX(-75px);
+                  }
+                }
+              `}
+            </style>
+        </Box>
+      );
+}
+
+export default InstantNCharger

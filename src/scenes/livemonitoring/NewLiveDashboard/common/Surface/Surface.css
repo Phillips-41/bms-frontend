@@ -1,0 +1,10 @@
+/* Shared card shell used by every panel on the dashboard. */
+.surface {
+  height: 100%;
+  min-height: 0;
+  background: color-mix(in oklab, var(--card) 94%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  border-radius: var(--radius);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(14px);
+}
