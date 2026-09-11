@@ -46,132 +46,136 @@ export default Livemonitoring;
 
 function Dashboard() {
   return (
+   <Box
+  component="main"
+  sx={{
+    position: "relative",
+    height: "100%",
+    minHeight: 0,
+    overflow: "hidden",
+    background: "var(--background)",
+    display: "flex",
+    flexDirection: "column",
+  }}
+>
+  <Box
+    sx={{
+      position: "relative",
+      zIndex: 1,
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+      height: "100%",
+      minHeight: 0,
+      maxWidth: 1920,
+      mx: "auto",
+      gap: { xs: "4px", md: "5px", lg: "6px" },
+      p: { xs: "4px", md: "5px", lg: "6px" },
+      boxSizing: "border-box",
+    }}
+  >
+    <Header />
+    <HealthBar />
+
     <Box
-      component="main"
       sx={{
-        position: "relative",
-        height: "100%",
+        display: "grid",
         minHeight: 0,
+        flex: 1,
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "200px minmax(0, 1fr) 168px",
+          lg: "220px minmax(0, 1fr) 180px",
+          xl: "240px minmax(0, 1fr) 200px",
+        },
+        gap: { xs: "4px", md: "5px", lg: "10px" },
         overflow: "hidden",
-        background: "var(--background)",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
       <Box
         sx={{
-          position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-          height: "100%",
           minHeight: 0,
-          maxWidth: 1920,
-          mx: "auto",
-          gap: { xs: "4px", md: "5px", lg: "6px" },
-          p: { xs: "4px", md: "5px", lg: "6px" },
-          boxSizing: "border-box",
+          height: "100%",
+          overflow: "hidden",
+          display: { xs: "none", md: "block" },
         }}
       >
-        <Header />
-        <HealthBar />
+        <CellsPanel />
+      </Box>
 
-        <Box
-          sx={{
-            display: "grid",
-            minHeight: 0,
-            flex: 1,
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "200px minmax(0, 1fr) 168px",
-              lg: "220px minmax(0, 1fr) 180px",
-              xl: "240px minmax(0, 1fr) 200px",
-            },
-            gap: { xs: "4px", md: "5px", lg: "6px" },
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            sx={{
-              minHeight: 0,
-              height: "100%",
-              overflow: "hidden",
-              display: { xs: "none", md: "block" },
-            }}
-          >
-            <CellsPanel />
-          </Box>
+      <Box
+        sx={{
+          display: "grid",
+          minWidth: 0,
+          minHeight: 0,
+          height: "100%",
+          overflow: "hidden",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md: "repeat(12, minmax(0, 1fr))",
+          },
+          gridTemplateRows: {
+            xs: "auto",
+            md: "minmax(64px, 0.18fr) minmax(52px, 0.14fr) minmax(90px, 0.34fr) minmax(100px, 0.34fr)",
+            // Added explicit scaling for lg and xl so the 4 rows fit larger viewports cleanly
+            lg: "minmax(74px, 0.18fr) minmax(62px, 0.14fr) minmax(100px, 0.34fr) minmax(110px, 0.34fr)",
+            xl: "minmax(84px, 0.18fr) minmax(72px, 0.14fr) minmax(110px, 0.34fr) minmax(120px, 0.34fr)",
+          },
+          gap: { xs: "4px", md: "5px", lg: "15px" },
+        }}
+      >
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <LiveBattery />
+        </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <StateOfCharge />
+        </Box>
 
-          <Box
-            sx={{
-              display: "grid",
-              minWidth: 0,
-              minHeight: 0,
-              height: "100%",
-              overflow: "hidden",
-              gridTemplateColumns: {
-                xs: "1fr",
-                md: "repeat(12, minmax(0, 1fr))",
-              },
-              gridTemplateRows: {
-                xs: "auto",
-                md: "minmax(64px, 0.18fr) minmax(52px, 0.14fr) minmax(90px, 0.34fr) minmax(100px, 0.34fr)",
-              },
-              gap: { xs: "4px", md: "5px", lg: "6px" },
-            }}
-          >
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <LiveBattery />
-            </Box>
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <StateOfCharge />
-            </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" }, minHeight: 0, overflow: "hidden" }}>
+          <Charger />
+        </Box>
 
-            <Box sx={{ gridColumn: { xs: "1", md: "1 / -1" }, minHeight: 0, overflow: "hidden" }}>
-              <Charger />
-            </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <Cumulative />
+        </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <Cycles />
+        </Box>
 
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <Cumulative />
-            </Box>
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <Cycles />
-            </Box>
-
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <BarChart
-                title="Discharge current"
-                bars={[
-                  { label: "Average", value: "0.084 A", height: 30 },
-                  { label: "Peak", value: "2.0538 A", height: 78 },
-                ]}
-              />
-            </Box>
-            <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
-              <BarChart
-                title="Charge / discharge ampere-hour"
-                bars={[
-                  { label: "Ah In", value: "10.327", height: 84 },
-                  { label: "Ah Out", value: "0.445", height: 22 },
-                ]}
-              />
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              minHeight: 0,
-              height: "100%",
-              overflow: "hidden",
-              display: { xs: "none", md: "block" },
-            }}
-          >
-            <Alarms items={mockAlarms} />
-          </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <BarChart
+            title="Discharge current"
+            bars={[
+              { label: "Average", value: "0.084 A", height: 30 },
+              { label: "Peak", value: "2.0538 A", height: 78 },
+            ]}
+          />
+        </Box>
+        <Box sx={{ gridColumn: { xs: "1", md: "span 6" }, minHeight: 0, overflow: "hidden" }}>
+          <BarChart
+            title="Charge / discharge ampere-hour"
+            bars={[
+              { label: "Ah In", value: "10.327", height: 84 },
+              { label: "Ah Out", value: "0.445", height: 22 },
+            ]}
+          />
         </Box>
       </Box>
+
+      <Box
+        sx={{
+          minHeight: 0,
+          height: "100%",
+          overflow: "hidden",
+          display: { xs: "none", md: "block" },
+        }}
+      >
+        <Alarms items={mockAlarms} />
+      </Box>
     </Box>
+  </Box>
+</Box>
+
   );
 }
 
