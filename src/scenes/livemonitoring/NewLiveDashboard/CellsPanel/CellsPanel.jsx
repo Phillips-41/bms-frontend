@@ -4,23 +4,35 @@ import StatusDot from "../common/StatusDot/StatusDot";
 import { cells, cellsSummary } from "../../data/dashboardData";
 import "./CellsPanel.css";
 
-/** One compact cell row: ID + status · voltage · temp · SG on a single line. */
-function CellRow({ index, voltage, temperature, gravity }) {
+/** Display labels + CSS modifier for each cell status. */
+const STATUS_META = {
+  normal: { label: "Normal", className: "status-normal" },
+  high_voltage: { label: "High V", className: "status-high-v" },
+  high_temperature: { label: "High Temp", className: "status-high-temp" },
+  low_voltage: { label: "Low V", className: "status-low-v" },
+  about_to_die: { label: "About to die", className: "status-die" },
+  open_battery: { label: "Open battery", className: "status-open" },
+};
+
+/** One compact cell row: ID · voltage · temp · colored status chip. */
+function CellRow({ index, voltage, temperature, status }) {
   const id = `C${String(index + 1).padStart(2, "0")}`;
+  const meta = STATUS_META[status] ?? STATUS_META.normal;
+
   return (
     <Box
       className="cell-row"
       tabIndex={0}
-      title={`Cell ${id}: ${voltage.toFixed(3)} V, ${temperature}°C, SG ${gravity.toFixed(3)}`}
+      title={`Cell ${id}: ${voltage.toFixed(3)} V, ${temperature}°C, ${meta.label}`}
     >
       <Box className="cell-top">
         <strong>{id}</strong>
-        <StatusDot status="ok" small />
+        <StatusDot status={status === "normal" ? "ok" : status === "about_to_die" || status === "open_battery" ? "fault" : "warn"} small />
       </Box>
       <Box className="cell-values">
         <b>{voltage.toFixed(3)} V</b>
         <span>{temperature}°C</span>
-        <span>SG {gravity.toFixed(3)}</span>
+        <span className={`cell-status-chip ${meta.className}`}>{meta.label}</span>
       </Box>
     </Box>
   );
@@ -43,13 +55,13 @@ export default function CellsPanel() {
       </Box>
 
       <Box className="cells-list">
-        {cells.map(([voltage, temperature, gravity], index) => (
+        {cells.map(([voltage, temperature, status], index) => (
           <CellRow
             key={index}
             index={index}
             voltage={voltage}
             temperature={temperature}
-            gravity={gravity}
+            status={status}
           />
         ))}
       </Box>

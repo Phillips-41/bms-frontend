@@ -1,4 +1,4 @@
-/* Cells rail — single-line rows to avoid overlap; equal height share. */
+/* Cells rail — single-line rows + colored status chips. */
 .cells-panel {
   display: flex;
   height: 100%;
@@ -53,7 +53,6 @@
   overflow: hidden;
 }
 
-/* Single horizontal line per cell — no stacked overlap */
 .cell-row {
   display: flex;
   min-height: 0;
@@ -90,7 +89,7 @@
 
 .cell-values {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   min-width: 0;
   white-space: nowrap;
@@ -104,6 +103,57 @@
   font-family: var(--font-display);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Status chip — rounded pill with status color */
+.cell-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.cell-status-chip.status-normal {
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 12%, transparent);
+  border-color: color-mix(in oklab, var(--success) 28%, transparent);
+}
+
+.cell-status-chip.status-high-v {
+  color: #b45309;
+  background: color-mix(in oklab, #f59e0b 16%, transparent);
+  border-color: color-mix(in oklab, #f59e0b 35%, transparent);
+}
+
+.cell-status-chip.status-high-temp {
+  color: #c2410c;
+  background: color-mix(in oklab, #ea580c 16%, transparent);
+  border-color: color-mix(in oklab, #ea580c 35%, transparent);
+}
+
+.cell-status-chip.status-low-v {
+  color: #1d4ed8;
+  background: color-mix(in oklab, #3b82f6 14%, transparent);
+  border-color: color-mix(in oklab, #3b82f6 32%, transparent);
+}
+
+.cell-status-chip.status-die {
+  color: var(--destructive);
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  border-color: color-mix(in oklab, var(--destructive) 32%, transparent);
+}
+
+.cell-status-chip.status-open {
+  color: #6d28d9;
+  background: color-mix(in oklab, #8b5cf6 14%, transparent);
+  border-color: color-mix(in oklab, #8b5cf6 32%, transparent);
 }
 
 .cells-footer {

@@ -4,19 +4,78 @@
 // can replace this single module without touching any component.
 // -----------------------------------------------------------------------------
 
-/** 15 battery cells: [voltage (V), temperature (°C), specific gravity] */
+/** Cell status keys used by CellsPanel badges */
+export const CELL_STATUS = {
+  NORMAL: "normal",
+  HIGH_VOLTAGE: "high_voltage",
+  HIGH_TEMPERATURE: "high_temperature",
+  LOW_VOLTAGE: "low_voltage",
+  ABOUT_TO_DIE: "about_to_die",
+  OPEN_BATTERY: "open_battery",
+};
+
+/** 15 battery cells: [voltage (V), temperature (°C), status] */
 export const cells = [
-  [2.217, 30, 1.357], [2.202, 30, 1.354], [2.146, 31, 1.349],
-  [2.196, 30, 1.352], [2.208, 29, 1.355], [2.187, 30, 1.351],
-  [2.163, 31, 1.340], [2.225, 30, 1.358], [2.198, 29, 1.353],
-  [2.214, 30, 1.356], [2.189, 31, 1.350], [2.201, 30, 1.354],
-  [2.196, 29, 1.352], [2.219, 30, 1.357], [2.233, 29, 1.359],
+  [2.217, 30, "normal"],
+  [2.202, 30, "normal"],
+  [2.146, 31, "low_voltage"],
+  [2.196, 30, "normal"],
+  [2.208, 29, "normal"],
+  [2.187, 30, "normal"],
+  [2.163, 31, "high_temperature"],
+  [2.225, 30, "high_voltage"],
+  [2.198, 29, "normal"],
+  [2.214, 30, "normal"],
+  [2.189, 31, "normal"],
+  [2.201, 30, "normal"],
+  [2.196, 29, "about_to_die"],
+  [2.219, 30, "normal"],
+  [2.233, 29, "open_battery"],
 ];
 
-export const cellsSummary = { total: 15, normal: 15, average: "2.199 V", delta: "Δ 87 mV" };
+export const cellsSummary = {
+  total: 15,
+  normal: 11,
+  average: "2.199 V",
+  delta: "Δ 87 mV",
+};
 
-/** Header hierarchy filters: Region → Location → Site → Substation → Voltage level */
-export const filters = ["Maharashtra", "Jalgaon", "Jalgaon", "AMALNER-II", "33/11 KV"];
+/**
+ * Cascading location hierarchy for the Header filters.
+ * Shape: state → zone → circle → subDivision → substation[]
+ * Replace with API responses later.
+ */
+export const locationHierarchy = {
+  Maharashtra: {
+    Jalgaon: {
+      Jalgaon: {
+        "AMALNER-II": ["33/11 KV Amalner", "33/11 KV Chopda", "11 KV Dharangaon"],
+        "BHUSAWAL": ["33/11 KV Bhusawal", "11 KV Deepnagar"],
+      },
+      "Muktainagar": {
+        "MUKTAINAGAR": ["33/11 KV Muktainagar", "11 KV Kurha"],
+      },
+    },
+    Nagpur: {
+      Nagpur: {
+        "NAGPUR URBAN": ["33/11 KV Civil Lines", "11 KV Sitabuldi"],
+        "KAMPTEE": ["33/11 KV Kamptee"],
+      },
+    },
+    Pune: {
+      Pune: {
+        "PUNE CITY": ["33/11 KV Shivajinagar", "11 KV Kothrud"],
+      },
+    },
+  },
+  Gujarat: {
+    Surat: {
+      Surat: {
+        "SURAT CITY": ["33/11 KV Adajan", "11 KV Vesu"],
+      },
+    },
+  },
+};
 
 export const device = {
   id: "VJMDBMC250942",
@@ -27,14 +86,23 @@ export const device = {
 };
 
 export const deviceDetails = [
-  ["Serial Number", "AAJCO0942"], ["Manufacturer", "AAJCO"], ["Battery Type", "TUBULAR"],
-  ["Capacity", "100 Ah"], ["Design Voltage", "30 V"], ["Individual Cell", "2.0 V"],
-  ["First Used Date", "2026-04-21"], ["KVA Rating", "33/11 KV"],
+  ["Serial Number", "AAJCO0942"],
+  ["Manufacturer", "AAJCO"],
+  ["Battery Type", "TUBULAR"],
+  ["Capacity", "100 Ah"],
+  ["Design Voltage", "30 V"],
+  ["Individual Cell", "2.0 V"],
+  ["First Used Date", "2026-04-21"],
+  ["KVA Rating", "33/11 KV"],
 ];
 
 export const health = {
   state: "Normal",
-  items: [["Cells", "15/15"], ["Communication", "15/15"], ["Active alarms", "0"]],
+  items: [
+    ["Cells", "15/15"],
+    ["Communication", "15/15"],
+    ["Active alarms", "0"],
+  ],
   subsystems: ["BMS", "Charger", "Thermal"],
 };
 
@@ -50,14 +118,20 @@ export const stateOfCharge = { soc: 100, dod: 0 };
 export const charger = {
   status: "charging", // "charging" | "idle" | "fault"
   readings: [
-    ["AC voltage", "243.97 V"], ["AC current", "1.11 A"],
-    ["AC energy", "431.73 kWh"], ["Frequency", "50.00 Hz"],
+    ["AC voltage", "243.97 V"],
+    ["AC current", "1.11 A"],
+    ["AC energy", "431.73 kWh"],
+    ["Frequency", "50.00 Hz"],
   ],
 };
 
 export const cumulative = [
-  ["Cycle count", "39"], ["Ampere hour in", "755.526 Ah"], ["Ampere hour out", "233.719 Ah"],
-  ["Charging energy", "25.8736 kWh"], ["Discharging energy", "1.1594 kWh"], ["Battery run hours", "03:42:50"],
+  ["Cycle count", "39"],
+  ["Ampere hour in", "755.526 Ah"],
+  ["Ampere hour out", "233.719 Ah"],
+  ["Charging energy", "25.8736 kWh"],
+  ["Discharging energy", "1.1594 kWh"],
+  ["Battery run hours", "03:42:50"],
 ];
 
 export const cycles = {

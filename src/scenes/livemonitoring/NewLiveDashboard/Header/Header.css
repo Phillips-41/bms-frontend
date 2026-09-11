@@ -1,17 +1,19 @@
-/* Top bar visuals. Layout uses MUI Paper + flex via classes kept for style. */
+/* Top bar — cascading location selects + status cluster. */
 .top-header {
   min-height: 36px;
   flex-shrink: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 8px;
   background: color-mix(in oklab, var(--card) 94%, transparent);
   border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
   border-radius: var(--radius);
   box-shadow: var(--surface-shadow);
   backdrop-filter: blur(14px);
+  position: relative;
+  z-index: 20;
 }
 
 .filter-row,
@@ -20,55 +22,7 @@
   min-width: 0;
   align-items: center;
   gap: 6px;
-}
-
-.select-wrap {
-  position: relative;
-  min-width: 0;
-}
-
-.select-wrap select {
-  height: 28px;
-  max-width: 120px;
-  appearance: none;
-  border: 0;
-  border-radius: 5px;
-  background: var(--muted);
-  color: var(--foreground);
-  padding: 0 22px 0 8px;
-  font-size: 11px;
-  font-weight: 600;
-  outline: none;
-}
-
-.select-wrap svg {
-  position: absolute;
-  top: 8px;
-  right: 6px;
-  pointer-events: none;
-  color: var(--muted-foreground);
-}
-
-.search-box {
-  display: flex;
-  width: 120px;
-  height: 28px;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 0 8px;
-  color: var(--muted-foreground);
-}
-
-.search-box input {
-  min-width: 0;
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  font-size: 11px;
-  color: var(--foreground);
+  flex-wrap: wrap;
 }
 
 .live-state {
@@ -88,6 +42,8 @@
   gap: 3px;
   font-size: 11px;
   white-space: nowrap;
+  position: relative;
+  z-index: 30;
 }
 
 .header-status time {
