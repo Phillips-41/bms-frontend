@@ -290,29 +290,38 @@ export const AppProvider = ({ children }) => {
     } 
   };
 
+  const getSelectValue = (value) => {
+    if (value && typeof value === 'object' && 'target' in value) {
+      return value.target.value;
+    }
+    return value;
+  };
+
   const handleStateChange = async (newValue) => {
-    setState(newValue);
+    const value = getSelectValue(newValue);
+    setState(value);
     // setZone('');
     // setCircle('');
     setDeviceId('');
     // setCircleOptions([]);
     setSiteIdOptions([]);
     try {
-      const mapData = await fetchZoneNames(newValue);
+      const mapData = await fetchZoneNames(value);
       setZoneOptions(mapData);
     } catch (error) {
       console.error('Error fetching map data for state:', error);
     }
   };
   const handleZoneChange = async (newValue) => {
-    setZone(newValue);
+    const value = getSelectValue(newValue);
+    setZone(value);
         setDeviceId('');
     // setCircleOptions([]);
     // setCircle('');
     setSiteOptions([]);
     setSiteIdOptions([]);
     try {
-      const mapData = await fetchCircleNames(newValue);
+      const mapData = await fetchCircleNames(value);
       setCircleOptions(mapData);
       // setSiteIdOptions(mapData.map((site) => site.siteId));
     } catch (error) {
@@ -320,7 +329,8 @@ export const AppProvider = ({ children }) => {
     }
   };
   const handleCircleChange = async (newValue) => {
-    setCircle(newValue);
+    const value = getSelectValue(newValue);
+    setCircle(value);
     setDeviceId('');
     // setDivision('');
     // setDivisionOptions([]);
@@ -329,7 +339,7 @@ export const AppProvider = ({ children }) => {
     // setAreaOptions([]);
     // setArea('');
     try {
-      const mapData = await fetchDivisionList(newValue);
+      const mapData = await fetchDivisionList(value);
       setDivisionOptions(mapData);
       // setSiteIdOptions(mapData.map((site) => site.siteId));
     } catch (error) {
@@ -338,13 +348,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleDivisionChange = async (newValue) => {
-    setDivision(newValue);
+    const value = getSelectValue(newValue);
+    setDivision(value);
     setDeviceId('');
     setSiteOptions([]);
     setSiteIdOptions([]);
 
     try {
-      const mapData = await fetchAreaList(newValue);
+      const mapData = await fetchAreaList(value);
       setAreaOptions(mapData);
       setSiteIdOptions(mapData.map((site) => site.siteId));
     } catch (error) {

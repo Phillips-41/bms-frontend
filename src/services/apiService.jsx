@@ -1,8 +1,8 @@
 import axios from "axios";
 import { getUsername } from "../utils/ProtectedRoutes";
 
-const BASE_URL = "https://rbms.mahadiscom.in/mseb"; 
-// const BASE_URL = "https://rbms.mahadiscom.in/mseb";
+const BASE_URL = "http://localhost:51270"; 
+// const BASE_URL = "http://localhost:51270";
 export const API_KEY = "AIzaSyCHaONrQ1KYNXbtSRFNNSWETwrQaJY_B0U"
 
 // Create an Axios instance with default configuration
@@ -861,6 +861,19 @@ export const sendMasterFile = async (formData) => {
       },
     });
     return response.data;
+  } catch (error) {
+    console.error('Error in sending master file:', error);
+    throw error;
+  }
+};
+
+export const getFile = async (documentId) => {
+  try {
+     const response = await apiClient.get(`${BASE_URL}/api/documents/${documentId}/download`, {
+          responseType: 'blob',
+        });
+
+    return response;
   } catch (error) {
     console.error('Error in sending master file:', error);
     throw error;

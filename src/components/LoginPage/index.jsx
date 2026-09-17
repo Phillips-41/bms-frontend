@@ -24,7 +24,7 @@ const LoginPage = () => {
   const { token, setToken, setUserRole, username, setUsername } = useContext(AppContext);
   const navigate = useNavigate(); // Add this
 
-  const BASE_URL = "https://rbms.mahadiscom.in/mseb"; // Match your backend port
+  const BASE_URL = "http://localhost:51270"; // Match your backend port
 
   const fetchRoles = async () => {
     try {

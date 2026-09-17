@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import WifiIcon from "@mui/icons-material/Wifi";
 import DevicePopover from "../DevicePopover/DevicePopover";
-import { device, locationHierarchy } from "../../data/dashboardData";
+
+import { tokens } from "../../../../theme";
 import "./Header.css";
+import { AppContext } from "../../../../services/AppContext";
 
 const selectSx = {
   height: 30,
@@ -40,85 +44,32 @@ const menuProps = {
 };
 
 /** Compact cascading location filters + search trigger + live device status. */
-export default function Header() {
-  const [state, setState] = useState("Maharashtra");
-  const [zone, setZone] = useState("Jalgaon");
-  const [circle, setCircle] = useState("Jalgaon");
-  const [subDivision, setSubDivision] = useState("AMALNER-II");
-  const [substation, setSubstation] = useState("33/11 KV Amalner");
+export default function   Header() {
 
-  const states = useMemo(() => Object.keys(locationHierarchy), []);
 
-  const zones = useMemo(() => {
-    if (!state || !locationHierarchy[state]) return [];
-    return Object.keys(locationHierarchy[state]);
-  }, [state]);
 
-  const circles = useMemo(() => {
-    if (!state || !zone || !locationHierarchy[state]?.[zone]) return [];
-    return Object.keys(locationHierarchy[state][zone]);
-  }, [state, zone]);
+    const {
+    serialNumberOptions,
+    siteId,
+    serialNumber,
+    setSiteId,
+    setSerialNumber,setLiveTime,setDeviceId,setLocation,setCharger,setMdata,status,
+    handleSearch,setIsChecked,isChecked,setCircle,setState,Mdata = {},liveTime,setSerialNumberOptions,setSiteOptions,
+    data,state,circle,stateOptions,circleOptions,siteOptions,handleCircleChange,handleStateChange,clearOptions,
+    zone,setZone,zoneOptions,handleZoneChange, area, areaOptions, handleAreaChange,divisionOptions,division,handleDivisionChange
+  } = useContext(AppContext);
+  const { 
+    location = "", // Default location name
+    customer = "",    // Default vendor name
+  } = Mdata;
 
-  const subDivisions = useMemo(() => {
-    if (!state || !zone || !circle || !locationHierarchy[state]?.[zone]?.[circle]) return [];
-    return Object.keys(locationHierarchy[state][zone][circle]);
-  }, [state, zone, circle]);
-
-  const substations = useMemo(() => {
-    if (!state || !zone || !circle || !subDivision) return [];
-    return locationHierarchy[state]?.[zone]?.[circle]?.[subDivision] ?? [];
-  }, [state, zone, circle, subDivision]);
-
-  const handleState = (e) => {
-    const next = e.target.value;
-    setState(next);
-    const zList = Object.keys(locationHierarchy[next] ?? {});
-    const z = zList[0] ?? "";
-    setZone(z);
-    const cList = Object.keys(locationHierarchy[next]?.[z] ?? {});
-    const c = cList[0] ?? "";
-    setCircle(c);
-    const sdList = Object.keys(locationHierarchy[next]?.[z]?.[c] ?? {});
-    const sd = sdList[0] ?? "";
-    setSubDivision(sd);
-    const ssList = locationHierarchy[next]?.[z]?.[c]?.[sd] ?? [];
-    setSubstation(ssList[0] ?? "");
+const handleCheckboxChange = () => {
+    setIsChecked(!isChecked);
   };
-
-  const handleZone = (e) => {
-    const next = e.target.value;
-    setZone(next);
-    const cList = Object.keys(locationHierarchy[state]?.[next] ?? {});
-    const c = cList[0] ?? "";
-    setCircle(c);
-    const sdList = Object.keys(locationHierarchy[state]?.[next]?.[c] ?? {});
-    const sd = sdList[0] ?? "";
-    setSubDivision(sd);
-    const ssList = locationHierarchy[state]?.[next]?.[c]?.[sd] ?? [];
-    setSubstation(ssList[0] ?? "");
-  };
-
-  const handleCircle = (e) => {
-    const next = e.target.value;
-    setCircle(next);
-    const sdList = Object.keys(locationHierarchy[state]?.[zone]?.[next] ?? {});
-    const sd = sdList[0] ?? "";
-    setSubDivision(sd);
-    const ssList = locationHierarchy[state]?.[zone]?.[next]?.[sd] ?? [];
-    setSubstation(ssList[0] ?? "");
-  };
-
-  const handleSubDivision = (e) => {
-    const next = e.target.value;
-    setSubDivision(next);
-    const ssList = locationHierarchy[state]?.[zone]?.[circle]?.[next] ?? [];
-    setSubstation(ssList[0] ?? "");
-  };
-
-  const handleSearch = () => {
-    // Hook up to API later — for now log the cascade selection
-    console.log("Search location", { state, zone, circle, subDivision, substation });
-  };
+  // const handleSearch = () => {
+  //   // Hook up to API later — for now log the cascade selection
+  //   console.log("Search location", { state, zone, circle, subDivision, substation });
+  // };
 
   return (
     <Paper component="header" className="top-header" elevation={0}>
@@ -126,30 +77,30 @@ export default function Header() {
         <FormControl size="small" sx={{ minWidth: 100 }}>
           <Select
             value={state}
-            onChange={handleState}
+            onChange={(e) => handleStateChange(e.target.value)}
             displayEmpty
             sx={selectSx}
             MenuProps={menuProps}
             aria-label="State"
           >
-            {states.map((s) => (
-              <MenuItem key={s} value={s} sx={{ fontSize: 12 }}>
-                {s}
+            {stateOptions.map((s) => (
+              <MenuItem key={s.id} value={s.name} sx={{ fontSize: 12 }}>
+                {s.name}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 90 }} disabled={!zones.length}>
+        <FormControl size="small" sx={{ minWidth: 90 }} disabled={!zoneOptions.length}>
           <Select
             value={zone}
-            onChange={handleZone}
+            onChange={(e) => handleZoneChange(e.target.value)}
             displayEmpty
             sx={selectSx}
             MenuProps={menuProps}
             aria-label="Zone"
           >
-            {zones.map((z) => (
+            {zoneOptions.map((z) => (
               <MenuItem key={z} value={z} sx={{ fontSize: 12 }}>
                 {z}
               </MenuItem>
@@ -157,16 +108,16 @@ export default function Header() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 90 }} disabled={!circles.length}>
+        <FormControl size="small" sx={{ minWidth: 90 }} disabled={!circleOptions.length}>
           <Select
             value={circle}
-            onChange={handleCircle}
+            onChange={(e) => handleCircleChange(e.target.value)}
             displayEmpty
             sx={selectSx}
             MenuProps={menuProps}
             aria-label="Circle"
           >
-            {circles.map((c) => (
+            {circleOptions.map((c) => (
               <MenuItem key={c} value={c} sx={{ fontSize: 12 }}>
                 {c}
               </MenuItem>
@@ -174,16 +125,16 @@ export default function Header() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 110 }} disabled={!subDivisions.length}>
+        <FormControl size="small" sx={{ minWidth: 110 }} disabled={!divisionOptions.length}>
           <Select
-            value={subDivision}
-            onChange={handleSubDivision}
+            value={division}
+            onChange={(e) => handleDivisionChange(e.target.value)}
             displayEmpty
             sx={selectSx}
             MenuProps={menuProps}
             aria-label="Sub-division"
           >
-            {subDivisions.map((sd) => (
+            {divisionOptions.map((sd) => (
               <MenuItem key={sd} value={sd} sx={{ fontSize: 12 }}>
                 {sd}
               </MenuItem>
@@ -191,16 +142,16 @@ export default function Header() {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 130 }} disabled={!substations.length}>
+        <FormControl size="small" sx={{ minWidth: 130 }} disabled={!areaOptions.length}>
           <Select
-            value={substation}
-            onChange={(e) => setSubstation(e.target.value)}
+            value={area}
+            onChange={(e) => handleAreaChange(e.target.value)}
             displayEmpty
             sx={selectSx}
             MenuProps={menuProps}
             aria-label="Substation"
           >
-            {substations.map((ss) => (
+            {areaOptions.map((ss) => (
               <MenuItem key={ss} value={ss} sx={{ fontSize: 12 }}>
                 {ss}
               </MenuItem>
@@ -213,7 +164,7 @@ export default function Header() {
           size="small"
           aria-label="Search devices for selected location"
           onClick={handleSearch}
-          disabled={!substation}
+          disabled={!area}
           sx={{
             width: 30,
             height: 30,
@@ -226,25 +177,118 @@ export default function Header() {
         >
           <SearchIcon sx={{ fontSize: 16 }} />
         </IconButton>
+         {serialNumber &&
+     <>
+      <CustomToggle isChecked={isChecked} handleCheckboxChange={handleCheckboxChange} />
+      </>}
       </Box>
 
-      <Box className="header-status">
-        {device.live && (
-          <span className="live-state">
-            <span className="status-dot ok sm" />
-            Live
-          </span>
-        )}
+     {serialNumber &&
+     <>
+      {/* <CustomToggle isChecked={isChecked} handleCheckboxChange={handleCheckboxChange} /> */}
+     <Box className="header-status">
+          {status==1?  (
+            <span className="live-state">
+              <span className="status-dot ok sm" />
+              Live
+            </span>
+          ): (
+            <span className="not-live-state">
+              <span className="status-dot fault sm" />
+              Not Live
+            </span>
+          )}
 
-        <Box className="device-id">
-          <strong>{device.id}</strong>
-          <DevicePopover />
+          <Box className="device-id">
+            <strong>{serialNumber}</strong>
+            <DevicePopover />
+          </Box>
+
+          <time >{liveTime
+          ? new Date(liveTime).toLocaleString('en-GB', {
+              day: 'numeric',
+              month: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: 'numeric',
+              second: 'numeric',
+              hour12: false 
+            })
+          : 'No time available'}</time>
+
+          <WifiIcon className="connection-icon" sx={{ fontSize: 16 }} aria-label="Connected" />
         </Box>
-
-        <time dateTime={device.timestampISO}>{device.timestamp}</time>
-
-        <WifiIcon className="connection-icon" sx={{ fontSize: 16 }} aria-label="Connected" />
-      </Box>
+        </>
+      }
     </Paper>
   );
 }
+
+const CustomToggle = ({ isChecked, handleCheckboxChange }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer",
+        userSelect: "none",
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          width: { xs: 28, sm: 34, md: 40 },
+          height: { xs: 16, sm: 19, md: 22 },
+          flexShrink: 0,
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={isChecked}
+          onChange={handleCheckboxChange}
+          style={{ display: "none" }}
+        />
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            borderRadius: "9999px",
+            backgroundColor: isChecked ? "#4CAF50" : colors.grey[700],
+            boxShadow: isChecked ? "inset 0 2px 4px rgba(0, 0, 0, 0.2)" : "none",
+            transition: "all 0.3s ease",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            top: 2,
+            left: isChecked
+              ? { xs: 14, sm: 17, md: 20 }
+              : 2,
+            width: { xs: 12, sm: 15, md: 18 },
+            height: { xs: 12, sm: 15, md: 18 },
+            borderRadius: "50%",
+            backgroundColor: "white",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.2)",
+            transition: "all 0.3s ease",
+          }}
+        />
+      </Box>
+      <Typography
+        variant="body2"
+        sx={{
+          ml: { xs: 0.5, sm: 0.75, md: 1 },
+          fontSize: { xs: "0.65rem", sm: "0.7rem", md: "0.75rem" },
+          color: isChecked ? "#4CAF50" : colors.primary[200],
+          fontWeight: isChecked ? 600 : 400,
+          display: { xs: "none", sm: "inline" },
+        }}
+      >
+        Live
+      </Typography>
+    </label>
+  );
+};

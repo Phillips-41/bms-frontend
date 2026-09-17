@@ -1640,7 +1640,7 @@ export const RedLight = ({ radius = 8, intensity = 1, pulseSpeed = 0.5 }) => {
   );
 };
 
-  export const CellThresholdValues = () => {
+export const CellThresholdValues = () => {
     const {
       Mdata = {} 
       }=useContext(AppContext)

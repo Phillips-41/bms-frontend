@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useState,useContext } from "react";
 import Box from "@mui/material/Box";
 import Popover from "@mui/material/Popover";
 import IconButton from "@mui/material/IconButton";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { deviceDetails } from "../../data/dashboardData";
+import { AppContext } from "../../../../services/AppContext";
 import "./DevicePopover.css";
 
 /**
  * DevicePopover — ⓘ trigger that opens battery metadata above the grid.
  * Uses MUI Popover (portal) so it always renders on top of dashboard cards.
  */
-export default function DevicePopover({ details = deviceDetails }) {
+export default function DevicePopover() {
+
+const{Mdata} = useContext(AppContext);
+const{  firstUsedDate= "",
+    batterySerialNumber= "",
+    batteryBankType= "",
+    ahCapacity= "",
+    manufacturerName= "",
+    designVoltage= "",
+    individualCellVoltage= "",
+    kva=""}=Mdata
+ const details = [
+  ["Battery Serial Number", batterySerialNumber],
+  ["Manufacturer", manufacturerName],
+  ["Battery Type", batteryBankType],
+  ["Capacity", ahCapacity],
+  ["Design Voltage", designVoltage],
+  ["Individual Cell", individualCellVoltage],
+  ["First Used Date", firstUsedDate],
+  ["KV Rating", kva],
+];
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 

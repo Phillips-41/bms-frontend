@@ -33,7 +33,7 @@ function PacketViwer() {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [highlightedCellId, setHighlightedCellId] = useState(null);
   const cellRefs = useRef({});
-  const BASE_URL = "https://rbms.mahadiscom.in/mseb";
+  const BASE_URL = "http://localhost:51270";
   const [copiedId, setCopiedId] = useState(null);
   const [siteId, setSiteId] = useState(null);
   const [selectedDateTime, setSelectedDateTime] = useState(null);

@@ -35,6 +35,16 @@
   text-transform: uppercase;
 }
 
+.not-live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--destructive);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .device-id {
   display: flex;
   min-width: 0;

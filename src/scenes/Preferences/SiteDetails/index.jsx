@@ -30,7 +30,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { tokens } from '../../../theme';
 import { set } from 'lodash';
 
-const BASE_URL = "https://rbms.mahadiscom.in/mseb";
+const BASE_URL = "http://localhost:51270";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
