@@ -1,8 +1,8 @@
 import React, { useContext, useState } from "react";
-import { 
-  useTheme, 
-  IconButton, 
-  Box, 
+import {
+  useTheme,
+  IconButton,
+  Box,
   CircularProgress,
   Table,
   TableBody,
@@ -13,16 +13,16 @@ import {
   Paper,
   Typography,
   TablePagination,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 import { AppContext, formatDate } from "../../../services/AppContext";
 import ReportsBar from "../ReportsBar/ReportsBar";
 import ChargingGraph from "./ChargingGraph";
 import AhGraph from "./AhGraph";
 import { formatToTime } from "../../../services/AppContext";
-import GridOnIcon from '@mui/icons-material/GridOn';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { downloadDayWiseBatteryandChargerdetails } from '../../../services/apiService';
+import GridOnIcon from "@mui/icons-material/GridOn";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { downloadDayWiseBatteryandChargerdetails } from "../../../services/apiService";
 import { tokens } from "../../../theme";
 import { formatDateStamp } from "../Historical/CellType";
 
@@ -40,20 +40,18 @@ const columnMappings = {
 
 const DayWise = () => {
   const theme = useTheme();
-  const colors= tokens(theme.palette.mode);
-  const { 
-    dayDaywiseData = [],  
-    page, 
-    setPage, 
-    setRowsPerPage, 
+  const colors = tokens(theme.palette.mode);
+  const {
+    dayDaywiseData = [],
+    page,
+    setPage,
+    setRowsPerPage,
     rowsPerPage,
-    siteId,
-    serialNumber,
-    startDate, 
-    endDate, 
+    startDate,
+    endDate,
     totalRecords,
-    loadingReport ,
-    area
+    loadingReport,
+    area,
   } = useContext(AppContext);
 
   const [isDownloading, setIsDownloading] = useState(false);
@@ -87,16 +85,15 @@ const DayWise = () => {
         totalChargingEnergy,
         totalDischargingEnergy,
         totalSoc,
-        cumulativeTotalAvgTemp
+        cumulativeTotalAvgTemp,
       } = row;
 
-      // Convert to IST and format date
       let formattedDate = "No Date";
       if (dayWiseDate) {
         const date = new Date(dayWiseDate);
-        const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
+        const istOffset = 5.5 * 60 * 60 * 1000;
         const istDate = new Date(date.getTime() + istOffset);
-        formattedDate = istDate.toISOString().split("T")[0]; // YYYY-MM-DD
+        formattedDate = istDate.toISOString().split("T")[0];
       }
 
       return {
@@ -111,12 +108,12 @@ const DayWise = () => {
         cumulativeTotalAvgTemp: formatNumber(cumulativeTotalAvgTemp),
       };
     });
-};
+  };
 
   const formattedData = formatData(dayDaywiseData);
 
   const handleDownloadExcel = async () => {
-    if (!area|| !startDate || !endDate) {
+    if (!area || !startDate || !endDate) {
       return;
     }
 
@@ -143,52 +140,66 @@ const DayWise = () => {
   };
 
   return (
-    <div>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-      }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+    >
+      {/* Top bar — fixed */}
+      <Box
+        sx={{
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <ReportsBar pageType="daywise" />
         <Tooltip title="Export to Excel">
-          <Box sx={{ position: 'relative', marginRight: '20px', marginTop: '8px' }}>
+          <Box sx={{ position: "relative", marginRight: "20px", marginTop: "8px" }}>
             <IconButton
               onClick={handleDownloadExcel}
               disabled={loadingReport || isDownloading || !startDate || !endDate}
               sx={{
-                backgroundColor: '#4caf50',
+                backgroundColor: "#4caf50",
                 color: colors.primary[200],
-                '&:hover': { backgroundColor: '#388e3c' },
-                '&.Mui-disabled': { backgroundColor: '#4caf50', opacity: 0.5 },
+                "&:hover": { backgroundColor: "#388e3c" },
+                "&.Mui-disabled": { backgroundColor: "#4caf50", opacity: 0.5 },
               }}
             >
-              {downloadComplete ? (
-                <CheckCircleIcon />
-              ) : (
-                <GridOnIcon />
-              )}
+              {downloadComplete ? <CheckCircleIcon /> : <GridOnIcon />}
             </IconButton>
             {isDownloading && (
               <CircularProgress
                 size={40}
                 sx={{
-                  color: '#4caf50',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: '-20px',
-                  marginLeft: '-20px',
+                  color: "#4caf50",
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  marginTop: "-20px",
+                  marginLeft: "-20px",
                 }}
               />
             )}
           </Box>
         </Tooltip>
-      </div>
+      </Box>
 
+      {/* Scrollable body: graphs → gap → table → pagination */}
       <Box
         sx={{
-          height: "calc(100vh - 200px)",
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
-          padding: "10px",
+          overflowX: "hidden",
+          px: 1.5,
+          py: 1,
         }}
       >
         {loadingReport ? (
@@ -197,177 +208,146 @@ const DayWise = () => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              height: "100%",
+              height: "379px",
               flexDirection: "column",
-              gap: 2
+              gap: 2,
             }}
           >
             <CircularProgress />
-            <Typography variant="body1"  sx={{color:colors.primary[200]}}>Loading day-wise data...</Typography>
+            <Typography variant="body1" sx={{ color: colors.primary[200] }}>
+              Loading day-wise data...
+            </Typography>
           </Box>
         ) : formattedData.length > 0 ? (
           <>
-            <div style={{ paddingBottom: "10px" }}>
-              <Box paddingBottom={2}>
-                <Paper elevation={10} sx={{bgcolor:colors.primary[100]}}>
-                  <AhGraph data={dayDaywiseData || []} />
-                </Paper>
-              </Box>
-              <Paper elevation={10} sx={{bgcolor:colors.primary[100]}}>
+            {/* Graphs on top — natural height */}
+            <Box sx={{ mb: 2 }}>
+              <Paper elevation={10} sx={{ bgcolor: colors.primary[100], mb: 2 }}>
+                <AhGraph data={dayDaywiseData || []} />
+              </Paper>
+              <Paper elevation={10} sx={{ bgcolor: colors.primary[100] }}>
                 <ChargingGraph data={dayDaywiseData || []} />
               </Paper>
-            </div>
+            </Box>
 
-            <Box padding="0px 10px 0px 10px">
-              <TableContainer
-                component={Paper}
-                sx={{
-                  marginTop: 1,
-                  maxHeight: {lg:"360px",md:"300px",sm:"270px",xs:"400px",xl:"480px"},
-                  overflow: "auto",
-                  border: colors.primary[300],
-                  borderRadius: "8px",
-                       backgroundColor: colors.primary[100], // Transparent background
-            '& .MuiPaper-root': {
-              backgroundColor: colors.primary[100], // Override Paper's default white background
-            },
-                }}
-              >
-                <Table stickyHeader aria-label="daywise table">
-                  <TableHead>
-                    <TableRow>
-                      {Object.keys(columnMappings).map((key) => (
+            {/* Gap between graphs and table */}
+            <Box sx={{ height: 16 }} />
+
+            {/* Table */}
+            <TableContainer
+              component={Paper}
+              sx={{
+                maxHeight: { lg: "360px", md: "300px", sm: "270px", xs: "400px", xl: "480px" },
+                overflow: "auto",
+                borderRadius: "8px",
+                backgroundColor: colors.primary[100],
+                border: colors.primary[300],
+              }}
+            >
+              <Table stickyHeader aria-label="daywise table">
+                <TableHead>
+                  <TableRow>
+                    {Object.keys(columnMappings).map((key) => (
+                      <TableCell
+                        key={key}
+                        sx={{
+                          fontWeight: "bold",
+                          background:
+                            "linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))",
+                          color: colors.primary[200],
+                          padding: "3px",
+                          minWidth: "150px",
+                          whiteSpace: "nowrap",
+                          textAlign: "center",
+                        }}
+                      >
+                        {columnMappings[key]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formattedData.map((row, index) => (
+                    <TableRow key={index}>
+                      {Object.keys(columnMappings).map((key, idx) => (
                         <TableCell
-                          key={key}
+                          key={idx}
                           sx={{
+                            border: colors.primary[300],
+                            padding: "5px",
                             fontWeight: "bold",
-                            background: 'linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))',
+                            textAlign: "center",
                             color: colors.primary[200],
-                            padding: "3px",
-                            minWidth: "150px",
-                            whiteSpace: "nowrap",
-                            textAlign: "center"
+                            backgroundColor: "transparent",
                           }}
                         >
-                          {columnMappings[key]}
+                          {key === "dayWiseDate"
+                            ? formatDateStamp(row[key])
+                            : row[key]}
                         </TableCell>
                       ))}
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {formattedData.map((row, index) => (
-                      <TableRow
-                        key={index}
-                      >
-                        {Object.keys(columnMappings).map((key, idx) => (
-                          <TableCell
-                            key={idx}
-                            sx={{
-                               border:colors.primary[300], // Lighter white border
-                              padding: "5px",
-                              fontWeight: "bold",
-                              textAlign: "center",
-                              color: colors.primary[200], // White text
-                              backgroundColor: 'transparent', // Transparent background
-                            }}
-                          >
-                             {key === 'dayWiseDate'
-                            ? formatDateStamp(row[key]) :row[key]}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-              <TablePagination
-                rowsPerPageOptions={[25, 50, 75]}
-                component="div"
-                count={totalRecords || formattedData.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                  sx={{
-    color: colors.primary[200], // White text for all elements
-    backgroundColor: 'transparent !important', // Transparent background
-    '& .MuiTablePagination-toolbar': {
-      height: '35px', // Match TextField/DatePicker height
-      color: colors.primary[200], // White toolbar text
-      backgroundColor: 'transparent !important', // Transparent toolbar
-    },
-    '& .MuiTablePagination-selectLabel': {
-      color: colors.primary[200], // White "Rows per page" label
-      fontSize: '12px',
-      fontFamily: 'Source Sans Pro',
-      fontWeight: 'bold',
-    },
-    '& .MuiTablePagination-displayedRows': {
-      color: colors.primary[200], // White "1-10 of 100" text
-      fontSize: '12px',
-      fontFamily: 'Source Sans Pro',
-      fontWeight: 'bold',
-    },
-    '& .MuiTablePagination-select': {
-      color: colors.primary[200], // White select text
-      fontSize: '12px',
-      fontFamily: 'Source Sans Pro',
-      fontWeight: 'bold',
-      '& .MuiSelect-select': {
-        padding: '2px 24px 2px 8px', // Adjust padding for consistency
-      },
-    },
-    '& .MuiTablePagination-selectIcon': {
-      color: colors.primary[200], // White dropdown arrow
-    },
-    '& .MuiTablePagination-actions': {
-      '& .MuiIconButton-root': {
-        color: colors.primary[200], // White navigation icons
-      },
-      '& .Mui-disabled': {
-        color: colors.primary[200], // White for disabled icons
-        opacity: 0.5, // Slight fade for disabled state
-      },
-    },
-    '& .MuiTablePagination-menu': {
-      '& .MuiPaper-root': {
-        backgroundColor: 'black !important', // Black dropdown menu
-        color: colors.primary[200], // White menu items
-        border: colors.primary[300], // White border for dropdown
-      },
-      '& .MuiMenuItem-root': {
-        color: colors.primary[200], // White menu item text
-        fontSize: '12px',
-        fontFamily: 'Source Sans Pro',
-        '&:hover': {
-          backgroundColor: '#333 !important', // Darker gray on hover
-        },
-      },
-    },
-    '& .MuiInputBase-root': {
-      color: colors.primary[200], // White select input
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: colors.primary[200], // White border for select
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: colors.primary[200], // White border on hover
-      },
-      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: colors.primary[200], // White border when focused
-      },
-    },
-  }}
-              />
-            </Box>
+            {/* Gap + Pagination — scroll down to see */}
+            <Box sx={{ height: 8 }} />
+            <TablePagination
+              component="div"
+              rowsPerPageOptions={[25, 50, 75]}
+              count={totalRecords || formattedData.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                color: colors.primary[200],
+                backgroundColor: colors.primary[100],
+                borderRadius: "0 0 8px 8px",
+                mb: 2,
+                "& .MuiTablePagination-toolbar": {
+                  minHeight: 40,
+                  height: "auto",
+                },
+                "& .MuiTablePagination-selectLabel": {
+                  color: colors.primary[200],
+                  fontSize: "12px",
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: "bold",
+                },
+                "& .MuiTablePagination-displayedRows": {
+                  color: colors.primary[200],
+                  fontSize: "12px",
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: "bold",
+                },
+                "& .MuiTablePagination-select": {
+                  color: colors.primary[200],
+                  fontSize: "12px",
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: "bold",
+                },
+                "& .MuiTablePagination-selectIcon": {
+                  color: colors.primary[200],
+                },
+                "& .MuiTablePagination-actions .MuiIconButton-root": {
+                  color: colors.primary[200],
+                },
+              }}
+            />
           </>
         ) : (
-          <Typography variant="body1" sx={{ marginTop: 2, textAlign: "center",color:colors.primary[200] }}>
+          <Typography
+            variant="body1"
+            sx={{ marginTop: 2, textAlign: "center", color: colors.primary[200] }}
+          >
             No data available
           </Typography>
         )}
       </Box>
-    </div>
+    </Box>
   );
 };
 

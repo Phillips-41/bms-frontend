@@ -1,30 +1,26 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Add this
+import { useNavigate, Navigate } from "react-router-dom";
 import Login from "../../assets/images/png/Login.png";
 import Watermark from "../../assets/images/watermark.jpeg";
-import { Navigate } from "react-router-dom";
 import { AppContext } from "../../services/AppContext";
 import Logo from "../../assets/images/png/vajra.png";
 import MahaLogo from "../../assets/images/png/maha.png";
 
+import LocationSetupDialog from "../LocationSetup/LocationSetupDialog";
 
-
-console.log(" MahaLogo");
 const LoginPage = () => {
   const [role, setRole] = useState("");
   const [roles, setRoles] = useState([]);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaInput, setCaptchaInput] = useState("");
-  const [captchaText, setCaptchaText] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [validationMessages, setValidationMessages] = useState([]);
-  const captchaCanvasRef = useRef(null);
+  
   const { token, setToken, setUserRole, username, setUsername } = useContext(AppContext);
-  const navigate = useNavigate(); // Add this
+  const navigate = useNavigate();
 
-  const BASE_URL = "http://localhost:51270"; // Match your backend port
+  const BASE_URL = "http://localhost:51270";
 
   const fetchRoles = async () => {
     try {
@@ -36,50 +32,20 @@ const LoginPage = () => {
     }
   };
 
-  const generateCaptcha = () => {
-    const canvas = captchaCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const characters = "A23BCDYZabcdEFGHIJKLMNOPQstuvwxRS1456TUVWXefghijkmnopqryz0789";  
-    const newCaptchaText = Array(6)
-      .fill()
-      .map(() => characters.charAt(Math.floor(Math.random() * characters.length)))
-      .join("");
-    setCaptchaText(newCaptchaText);
-
-    ctx.fillStyle = "#f0f0f0";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.font = "24px Arial";
-    ctx.fillStyle = "#333";
-    for (let i = 0; i < newCaptchaText.length; i++) {
-      ctx.save();
-      ctx.translate(25 * i + 15, 35);
-      ctx.rotate((Math.random() - 0.5) * 0.4);
-      ctx.fillText(newCaptchaText[i], 0, 0);
-      ctx.restore();
-    }
-
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-      ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-      ctx.strokeStyle = "#aaa";
-      ctx.stroke();
-    }
-  };
+  // Location setup for new LDAP users
+  const [showLocationSetup, setShowLocationSetup] = useState(false);
+  const [pendingToken, setPendingToken] = useState(null);
 
 
-  useEffect(() => {  
-    if (captchaCanvasRef.current) {   
-      generateCaptcha();
-    }
-  }, [captchaCanvasRef]);
+
+
+
+
+
 
   const fetchLoginDetails = async (username, password) => {
     try {
-      const response = await axios.post(`${BASE_URL}/authenticate`, {    
+      const response = await axios.post(`${BASE_URL}/authenticate`, {
         username,
         password,
       });
@@ -91,44 +57,51 @@ const LoginPage = () => {
     }
   };
 
+  const handleLocationSetupComplete = (newJwt) => {
+    sessionStorage.setItem("token", newJwt);
+    setToken(newJwt);
+    setShowLocationSetup(false);
+    setPendingToken(null);
+    navigate("/");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitted(true);
 
     const messages = [];
-    // if (!role) messages.push("Please select a role.");
     if (!username) messages.push("Please enter the username.");
     if (!password) messages.push("Please enter the password.");
-    if (!captchaInput) messages.push("Please enter the CAPTCHA.");
-
-    if (captchaInput && captchaInput !== captchaText) {
-      messages.push("Invalid CAPTCHA. Please try again.");
-      setCaptchaInput("");
-      generateCaptcha();
-    }
 
     setValidationMessages(messages);
-
     if (messages.length > 0) return;
 
     try {
-      const data = await fetchLoginDetails( username, password);
+      const data = await fetchLoginDetails(username, password);
       if (!data || !data.jwt) {
         setValidationMessages(["Invalid credentials. Please try again."]);
+      } else if (data.needsLocationSetup === true) {
+        // NEW LDAP user – show mandatory location dialog (do not navigate yet)
+        setPendingToken(data.jwt);
+        setShowLocationSetup(true);
       } else {
+        // Existing user – normal flow
         sessionStorage.setItem("token", data.jwt);
         setToken(data.jwt);
-        navigate("/"); // Redirect to home page
+        navigate("/");
+        navigate("/");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Invalid credentials. Please try again.";
+      const errorMessage =
+        error.response?.data?.message || "Invalid credentials. Please try again.";
       setValidationMessages([errorMessage]);
     }
   };
+
+
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   const styles = {
-    // Your existing styles remain unchanged
     background: {
       position: "fixed",
       top: 0,
@@ -159,10 +132,10 @@ const LoginPage = () => {
     },
     watermark: {
       position: "absolute",
-      top: 25,
+      top: 10,
       left: 0,
       width: "100%",
-      height: "80%",
+      height: "90%",
       backgroundImage: `url(${Watermark})`,
       backgroundRepeat: "no-repeat",
       backgroundPosition: "center",
@@ -174,43 +147,38 @@ const LoginPage = () => {
     form: {
       display: "flex",
       flexDirection: "column",
-      gap: "10px",
+      gap: "15px",
+    },
+    welcomeContainer: {
+      marginBottom: "15px",
+      textAlign: "center",
+    },
+    welcomeTitle: {
+      fontSize: "24px",
+      fontWeight: "bold",
+      color: "#007BFF",
+      margin: "0 0 5px 0",
     },
     inputBox: {
       textAlign: "left",
     },
     label: {
       display: "block",
-      marginBottom: "3px",
-      fontSize: "12px",
+      marginBottom: "2px",
+      fontSize: "14px",
       color: "#333",
       fontWeight: "bold",
     },
     input: {
       width: "100%",
-      padding: "8px",
-      fontSize: "12px",
+      padding: "10px",
+      fontSize: "14px",
       border: "1px solid #ccc",
       borderRadius: "4px",
       backgroundColor: "#fff",
       color: "#333",
       boxSizing: "border-box",
       outline: "none",
-    },
-    captchaInput: {
-      width: "100%",
-      padding: "8px",
-      fontSize: "12px",
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-      backgroundColor: "#fff",
-      color: "#333",
-      boxSizing: "border-box",
-      outline: "none",
-      "::placeholder": {
-        fontSize: "10px",
-        color: "#999",
-      },
     },
     passwordContainer: {
       position: "relative",
@@ -236,7 +204,10 @@ const LoginPage = () => {
       borderRadius: "4px",
       cursor: "pointer",
       transition: "background-color 0.3s ease",
-    },  
+      "&:hover": {
+        backgroundColor: "#0056b3",
+      },
+    },
     logoContainer: {
       position: "absolute",
       top: "15px",
@@ -266,28 +237,6 @@ const LoginPage = () => {
       padding: "6px 10px",
       borderRadius: "6px",
     },
-    captchaContainer: {
-      marginTop: "10px",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      gap: "10px",
-    },
-    captchaCanvas: {
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-      width: "120px",
-      height: "50px",
-    },
-    reloadButton: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      fontSize: "18px",
-      color: "#666",
-      padding: "0",
-      outline: "none",
-    },
     validationContainer: {
       textAlign: "center",
       marginBottom: "10px",
@@ -296,6 +245,16 @@ const LoginPage = () => {
       color: "red",
       fontSize: "12px",
       marginBottom: "4px",
+    },
+    successMessage: {
+      color: "green",
+      fontSize: "12px",
+      marginBottom: "4px",
+    },
+    divider: {
+      border: "none",
+      borderTop: "1px solid #e0e0e0",
+      margin: "10px 0",
     },
   };
 
@@ -308,8 +267,17 @@ const LoginPage = () => {
         <img src={MahaLogo} alt="MahaLogo" style={styles.MahaLogo} />
       </div>
       <div style={styles.background}></div>
+      
+      {/* Login Form */}
       <div style={styles.wrapper}>
         <div style={styles.watermark}></div>
+        
+        {/* Welcome Section */}
+        <div style={styles.welcomeContainer}>
+          <h2 style={styles.welcomeTitle}>Welcome Back!</h2>
+          <hr style={styles.divider} />
+        </div>
+        
         <form onSubmit={handleSubmit} style={styles.form}>
           {validationMessages.length > 0 && (
             <div style={styles.validationContainer}>
@@ -320,23 +288,7 @@ const LoginPage = () => {
               ))}
             </div>
           )}
-          {/* <div style={styles.inputBox}>
-            <label style={styles.label}>Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={styles.input}
-            >
-              <option value="" disabled>Select your role</option>
-              {Array.isArray(roles) && roles.length > 0 ? (
-                roles.map((roleOption, index) => (
-                  <option key={index} value={roleOption}>{roleOption}</option>
-                ))
-              ) : (
-                <option disabled>Loading roles...</option>
-              )}
-            </select>
-          </div> */}
+          
           <div style={styles.inputBox}>
             <label style={styles.label}>Username</label>
             <input
@@ -344,8 +296,10 @@ const LoginPage = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               style={styles.input}
+              placeholder="Enter your username"
             />
           </div>
+          
           <div style={styles.inputBox}>
             <label style={styles.label}>Password</label>
             <div style={styles.passwordContainer}>
@@ -354,6 +308,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ ...styles.input, paddingRight: "30px" }}
+                placeholder="Enter your password"
               />
               <button
                 type="button"
@@ -365,43 +320,29 @@ const LoginPage = () => {
               </button>
             </div>
           </div>
-          <div style={styles.captchaContainer}>
-            <canvas
-              ref={captchaCanvasRef}
-              width="160"
-              height="50"
-              style={styles.captchaCanvas}
-            />
-            <button
-              type="button"
-              onClick={generateCaptcha}
-              style={styles.reloadButton}
-              aria-label="Refresh CAPTCHA"
-            >
-              🔄
-            </button>
-            <input
-              type="text"
-              value={captchaInput}
-              onChange={(e) => setCaptchaInput(e.target.value)}
-              placeholder="Enter CAPTCHA"
-              style={styles.captchaInput}
-            />
-          </div>
+          
           <button type="submit" style={styles.button}>
             Login
           </button>
         </form>
       </div>
-       <p style={{ marginTop: "130px", marginLeft: "430px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
-              IoT Based
-            </p>
-            <p style={{ marginLeft: "250px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
-              Remote Battery Monitoring Sytem
-            </p>
-            <p style={{ marginLeft: "250px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
-              Battery Charger Monitoring System
+
+      <p style={{ marginTop: "130px", marginLeft: "430px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
+        IoT Based
       </p>
+      <p style={{ marginLeft: "250px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
+        Remote Battery Monitoring System
+      </p>
+      <p style={{ marginLeft: "250px", fontWeight: "900", fontSize: "35px", color: "rgba(128,128,128,0.3)", backgroundColor: "transparent" }}>
+        Battery Charger Monitoring System
+      </p>
+
+      {/* Mandatory location setup for NEW LDAP users */}
+      <LocationSetupDialog
+        open={showLocationSetup}
+        token={pendingToken}
+        onComplete={handleLocationSetupComplete}
+      />
     </div>
   );
 };

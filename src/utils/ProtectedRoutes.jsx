@@ -28,9 +28,52 @@ export function getUsername(token) {
   return decoded ? decoded.sub || null : null;
 }
 
+export function getUserTopics(token) {
+  const decoded = decodeJWT(token);
+  if (!decoded) return [];
+  const raw = decoded.topic;
+  if (Array.isArray(raw)) return raw;
+  // Backwards compat: if backend ever sends a single object
+  if (raw && typeof raw === "object") return [raw];
+  return [];
+}
+
 export function getUserPermissions(token) {
   const decoded = decodeJWT(token);
   return decoded ? decoded.accessPermissions || {} : {};
+}
+
+
+function resolveField(topics, key) {
+  const values = topics
+    .map((t) => t && t[key])
+    .filter((v) => v != null && v !== "" && v !== "null");
+
+  const unique = [...new Set(values)];
+
+  if (unique.length === 0) {
+    return { value: "", locked: false, options: [] };
+  }
+  if (unique.length === 1) {
+    return { value: unique[0], locked: true, options: unique };
+  }
+  return { value: "", locked: false, options: unique };
+}
+
+export function getUserAccess() {
+  const token = sessionStorage.getItem("token");
+  const topics = getUserTopics(token);
+  const decoded = token ? decodeJWT(token) : null;
+
+  return {
+    role: decoded?.role || "SUPERADMIN",
+    state: resolveField(topics, "state"),
+    zone: resolveField(topics, "zone"),
+    circle: resolveField(topics, "circle"),
+    division: resolveField(topics, "division"),
+    area: resolveField(topics, "area"),
+    topics,
+  };
 }
 
 const pathToPermissionKey = {
@@ -51,7 +94,6 @@ export const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-
   if (!token) {
     console.log("ProtectedRoute: No token found, redirecting to /login");
     return <Navigate to="/login" replace state={{ from: location }} />;
@@ -59,9 +101,7 @@ export const ProtectedRoute = ({ children }) => {
 
   const permissions = getUserPermissions(token);
  
-
   const currentKey = pathToPermissionKey[currentPath];
-
 
   // Check if the user has permission for the current path
   if (currentKey && permissions[currentKey]) {

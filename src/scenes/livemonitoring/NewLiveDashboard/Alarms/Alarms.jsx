@@ -1,4 +1,3 @@
-
 import { useContext } from "react";
 import { Box } from "@mui/material";
 import { AppContext } from "../../../../services/AppContext";
@@ -21,8 +20,8 @@ const NUMERIC_ALARM_FIELDS = new Set([
 
 function isActiveAlarm(key, value) {
   // Numeric alarm fields:
-  // 0 or 2 = active
-  // 1 = normal
+  // 0 = Low (active), 2 = High (active)
+  // 1 = normal (not active)
   if (NUMERIC_ALARM_FIELDS.has(key)) {
     return value === 0 || value === 2;
   }
@@ -74,16 +73,33 @@ function getAlarmSeverity(key) {
 }
 
 
+/**
+ * Build the display label.
+ * For numeric fields (0=Low, 2=High) append Low / High to the base label.
+ */
+function getAlarmLabel(key, value, baseLabel) {
+  if (NUMERIC_ALARM_FIELDS.has(key)) {
+    if (value === 0) return `${baseLabel} Low`;
+    if (value === 2) return `${baseLabel} High`;
+  }
+  return baseLabel;
+}
+
+
 function getActiveAlarms(combinedData, detailsMap) {
   return Object.entries(detailsMap)
     .filter(([key]) => {
       return isActiveAlarm(key, combinedData[key]);
     })
-    .map(([key, label]) => ({
-      id: key,
-      label,
-      severity: getAlarmSeverity(key),
-    }));
+    .map(([key, baseLabel]) => {
+      const value = combinedData[key];
+      return {
+        id: key,
+        label: getAlarmLabel(key, value, baseLabel),
+        severity: getAlarmSeverity(key),
+        value, // keep raw value if needed later
+      };
+    });
 }
 
 
@@ -111,12 +127,14 @@ export function Alarms() {
   };
 
 
+  // Base labels only (no Low/High hardcoded).
+  // Numeric fields get Low/High appended dynamically in getAlarmLabel.
   const detailsMap = {
     bankDischargeCycle: "Battery Discharging",
     dcVoltageOLN: "DC Voltage",
     cellCommunication: "Cell Communication fail",
     batteryCondition: "Battery Condition Low",
-    stringVoltageLNH: "String Voltage High",
+    stringVoltageLNH: "String Voltage",
     stringCurrentHN: "String Current High",
     ambientTemperatureHN: "Ambient Temperature High",
     socLN: "SOC Low",
@@ -310,4 +328,3 @@ const SEVERITY_STYLE = {
     Icon: InfoOutlinedIcon,
   },
 };
-

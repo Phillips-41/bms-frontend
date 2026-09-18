@@ -35,6 +35,7 @@ import {
   Collapse,
   Paper,
   InputLabel,
+  Popover,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from "@mui/material/styles";
@@ -97,7 +98,20 @@ const Team = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userIdToDelete, setUserIdToDelete] = useState(null);
   const [viewMode, setViewMode] = useState(false);
-
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    label: "",
+    color: "",
+    requirements: {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false,
+      symbol: false
+    }
+  });
+  const [passwordAnchorEl, setPasswordAnchorEl] = useState(null);
+  const [showPasswordPopover, setShowPasswordPopover] = useState(false);
 
   const textFieldStyles = {
     marginBottom: "16px",
@@ -114,118 +128,244 @@ const Team = () => {
     background: "linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))",
     color: colors.primary[200],
   };
-   const fetchUserData = async () => {
-        try {
-            // Assuming fetchUserDetails() now returns an array of UserCreationDTOs
-            const response = await fetchUserDetails(); 
-            const sanitizedUsers = response.map((user) => ({
-                loginCredentialsId: user.loginCredentialsId ,
-                username: user.username,
-                email: user.email,
-                mobile: user.mobile,
-                role: user.role,
-                pageAccessLevel: user.pageAccessLevel || {},
-                // MAPPING THE NEW BACKEND FIELD (accessList) to the form's state field (accessRules)
-                accessRules: user.accessList || [], 
-            }));
-            setUserData(sanitizedUsers);
-        } catch (error) {
-            console.error("Error fetching user data:", error);
-            setSnackbar({ open: true, message: "Failed to fetch user data", severity: "error" });
-        }
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+    const requirements = {
+      length: password.length >= 10,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      symbol: /[!@#$%^&*(),.?":{}|<>]/.test(password)
     };
+
+    const metCount = Object.values(requirements).filter(Boolean).length;
     
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [rolesResponse] = await Promise.all([
-                    fetchLoginRoles(),
-                ]);
-                setRoles(rolesResponse);
-                await fetchUserData();
-            } catch (error) {
-                console.error("Error fetching initial data:", error);
-                setSnackbar({ open: true, message: "Failed to fetch roles or users", severity: "error" });
-            }
-        };
-        fetchData();
-    }, []);
+    let score = 0;
+    let label = "";
+    let color = "";
 
-    const handleChangePage = (event, newPage) => {
-        const currentPosition = tableRef.current?.getBoundingClientRect().top + window.scrollY;
-        setPage(newPage);
-        window.scrollTo({ top: currentPosition - 50, behavior: "smooth" });
+    if (metCount <= 2) {
+      score = 1;
+      label = "Weak";
+      color = "#ff4444";
+    } else if (metCount === 3) {
+      score = 2;
+      label = "Good";
+      color = "#ffa500";
+    } else if (metCount >= 4) {
+      score = 3;
+      label = "Strong";
+      color = "#4CAF50";
+    }
+
+    setPasswordStrength({
+      score,
+      label,
+      color,
+      requirements
+    });
+  };
+
+  // Real-time password validation handler
+const handlePasswordChange = (e) => {
+  const newPassword = e.target.value;
+  setFormData({ ...formData, password: newPassword });
+  if (newPassword.length > 0) {
+    checkPasswordStrength(newPassword);
+    // Only show popover if we have a valid anchor element
+    if (passwordAnchorEl) {
+      setShowPasswordPopover(true);
+    }
+  } else {
+    setPasswordStrength({
+      score: 0,
+      label: "",
+      color: "",
+      requirements: {
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        symbol: false
+      }
+    });
+    setShowPasswordPopover(false);
+  }
+};
+
+  // Handle password field focus - show popover
+  const handlePasswordFocus = (event) => {
+  const anchor = event.currentTarget;
+  setPasswordAnchorEl(anchor);
+  // Only show popover if there's text in the password field
+  if (formData.password.length > 0) {
+    setShowPasswordPopover(true);
+  }
+};
+
+  // Handle password field blur - hide popover after delay
+ const handlePasswordBlur = () => {
+  // Use a longer delay to ensure click events on popover content work
+  setTimeout(() => {
+    setShowPasswordPopover(false);
+  }, 300);
+};
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetchUserDetails(); 
+      const sanitizedUsers = response.map((user) => ({
+        loginCredentialsId: user.loginCredentialsId,
+        username: user.username,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        pageAccessLevel: user.pageAccessLevel || {},
+        accessRules: user.accessList || [], 
+      }));
+      setUserData(sanitizedUsers);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setSnackbar({ open: true, message: "Failed to fetch user data", severity: "error" });
+    }
+  };
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rolesResponse] = await Promise.all([
+          fetchLoginRoles(),
+        ]);
+        setRoles(rolesResponse);
+        await fetchUserData();
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        setSnackbar({ open: true, message: "Failed to fetch roles or users", severity: "error" });
+      }
     };
+    fetchData();
+  }, []);
 
-    const handleChangeRowsPerPage = (event) => {
-        const currentPosition = tableRef.current?.getBoundingClientRect().top + window.scrollY;
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-        window.scrollTo({ top: currentPosition - 50, behavior: "smooth" });
-    };
+  const handleChangePage = (event, newPage) => {
+    const currentPosition = tableRef.current?.getBoundingClientRect().top + window.scrollY;
+    setPage(newPage);
+    window.scrollTo({ top: currentPosition - 50, behavior: "smooth" });
+  };
 
-    const handleOpen = (mode, row = null) => {
-        setSelectedRow(row);
-        setViewMode(mode === "view");
+  const handleChangeRowsPerPage = (event) => {
+    const currentPosition = tableRef.current?.getBoundingClientRect().top + window.scrollY;
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+    window.scrollTo({ top: currentPosition - 50, behavior: "smooth" });
+  };
 
-        if (row) {
-            // Load existing data for edit/view
-            setFormData({
-                loginCredentialsId: row.loginCredentialsId,
-                username: row.username,
-                email: row.email,
-                mobile: row.mobile, // Use 'mobile' from table data
-                role: row.role,
-                password: "",
-                pageAccessLevel: row.pageAccessLevel || Object.fromEntries(PAGES.map((p) => [p.key, false])),
-                accessRules: row.accessRules || [], // Load the new access rules
-            });
-            
-            // NOTE: Since the UserForm handles cascading dropdowns internally, 
-            // we no longer need the complex handleStateChange/fetchAllCirclesWithStates logic here. 
-            // The UserForm is initialized with the full set of rules and manages its own rule builder state.
+  const handleOpen = (mode, row = null) => {
+  setSelectedRow(row);
+  setViewMode(mode === "view");
 
-        } else {
-            // New user defaults
-            setFormData({
-                username: "",
-                email: "",
-                mobile: "",
-                role: "",
-                password: "",
-                pageAccessLevel: Object.fromEntries(PAGES.map((p) => [p.key, false])),
-                accessRules: [], // Default empty access rules
-            });
-        }
-        setOpen(true);
-    };
+  // Reset password strength when opening modal
+  setPasswordStrength({
+    score: 0,
+    label: "",
+    color: "",
+    requirements: {
+      length: false,
+      uppercase: false,
+      lowercase: false,
+      number: false,
+      symbol: false
+    }
+  });
+  
+  // Reset popover state - CRITICAL FIX
+  setShowPasswordPopover(false);
+  setPasswordAnchorEl(null);
 
-    const handleClose = () => {
-        setOpen(false);
-        setSelectedRow(null);
-        setUserError("");
-        // Reset form data to defaults upon close
-        setFormData({
-            username: "", email: "", mobile: "", role: "", password: "",
-            pageAccessLevel: Object.fromEntries(PAGES.map((p) => [p.key, false])),
-            accessRules: [],
-        });
-    };
+  if (row) {
+    setFormData({
+      loginCredentialsId: row.loginCredentialsId,
+      username: row.username,
+      email: row.email,
+      mobile: row.mobile,
+      role: row.role,
+      password: "",
+      pageAccessLevel: row.pageAccessLevel || Object.fromEntries(PAGES.map((p) => [p.key, false])),
+      accessRules: row.accessRules || [],
+    });
+  } else {
+    setFormData({
+      username: "",
+      email: "",
+      mobile: "",
+      role: "",
+      password: "",
+      pageAccessLevel: Object.fromEntries(PAGES.map((p) => [p.key, false])),
+      accessRules: [],
+    });
+  }
+  setOpen(true);
+};
 
-    const validateForm = () => {
-        const mobileRegex = /^\d{10}$/; // Changed to mobileRegex
-        const emailRegex = /^[^\s@]+@gmail\.com$/;
-        if (!formData.username) return "Username is required.";
-        if (!selectedRow && !formData.password) return "Password is required.";
-        if (!formData.email) return "Email is required.";
-        if (!emailRegex.test(formData.email)) return "Email must end with @gmail.com.";
-        if (!formData.mobile) return "Mobile number is required."; // Changed to mobile
-        if (!mobileRegex.test(formData.mobile)) return "Mobile number must be exactly 10 digits."; // Changed to mobile
-        if (!formData.role) return "Role is required.";
-        if (formData.role !== "SUPERADMIN" && !Object.values(formData.pageAccessLevel).some((v) => v))
-            return "At least one page permission must be selected for non-SUPERADMIN users.";
-        return "";
-    };
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedRow(null);
+    setUserError("");
+    setPasswordStrength({
+      score: 0,
+      label: "",
+      color: "",
+      requirements: {
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        symbol: false
+      }
+    });
+    setShowPasswordPopover(false);
+    setPasswordAnchorEl(null);
+    setFormData({
+      username: "", email: "", mobile: "", role: "", password: "",
+      pageAccessLevel: Object.fromEntries(PAGES.map((p) => [p.key, false])),
+      accessRules: [],
+    });
+  };
+
+  const validateForm = () => {
+    const mobileRegex = /^\d{10}$/;
+    const emailRegex = /^[^\s@]+@gmail\.com$/;
+    
+    if (!formData.username) return "Username is required.";
+    if (!selectedRow && !formData.password) return "Password is required.";
+    
+    // Password validation for new users or when password is changed
+    if (!selectedRow || (selectedRow && formData.password)) {
+      const passwordRequirements = {
+        length: formData.password.length >= 10,
+        uppercase: /[A-Z]/.test(formData.password),
+        lowercase: /[a-z]/.test(formData.password),
+        number: /[0-9]/.test(formData.password),
+        symbol: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+      };
+
+      if (!passwordRequirements.length) return "Password must be at least 10 characters long.";
+      if (!passwordRequirements.uppercase) return "Password must contain at least one uppercase letter.";
+      if (!passwordRequirements.lowercase) return "Password must contain at least one lowercase letter.";
+      if (!passwordRequirements.number) return "Password must contain at least one number.";
+      if (!passwordRequirements.symbol) return "Password must contain at least one special character.";
+    }
+    
+    if (!formData.email) return "Email is required.";
+    if (!emailRegex.test(formData.email)) return "Email must end with @gmail.com.";
+    if (!formData.mobile) return "Mobile number is required.";
+    if (!mobileRegex.test(formData.mobile)) return "Mobile number must be exactly 10 digits.";
+    if (!formData.role) return "Role is required.";
+    if (formData.role !== "SUPERADMIN" && !Object.values(formData.pageAccessLevel).some((v) => v))
+      return "At least one page permission must be selected for non-SUPERADMIN users.";
+    return "";
+  };
+
   const handleStateChange = async (newValue) => {
     setFormData({ ...formData, selectedState: newValue, circleNames: [] });
     setCircleOptions([]);
@@ -239,77 +379,164 @@ const Team = () => {
   };
 
   const handleSubmit = async (event) => {
-        const validationError = validateForm();
-        if (validationError) {
-            setUserError(validationError);
-            setSnackbar({ open: true, message: validationError, severity: "error" });
-            return;
-        }
+    const validationError = validateForm();
+    if (validationError) {
+      setUserError(validationError);
+      setSnackbar({ open: true, message: validationError, severity: "error" });
+      return;
+    }
 
-        const finalPageAccessLevel =
-            event.role === "SUPERADMIN"
-                ? Object.fromEntries(PAGES.map((p) => [p.key, true]))
-                : event.pageAccessLevel;
+    const finalPageAccessLevel =
+      event.role === "SUPERADMIN"
+        ? Object.fromEntries(PAGES.map((p) => [p.key, true]))
+        : event.pageAccessLevel;
 
-        // Construct the Final Data Payload matching UserCreationDTO
-        const data = {
-            username: event.username,
-            password: event.password,
-            mobile: event.mobile, // Uses 'mobile' from form state
-            email: event.email,
-            role: event.role,
-            pageAccessLevel: finalPageAccessLevel,
-            // CRITICAL CHANGE: Send accessRules as 'accessList'
-            accessList: event.accessList || [], 
-            // Note: event is typically set by the server, omitting here
-        };
-        
-        // If editing, include the user ID
-        if (selectedRow) {
-            data.id = selectedRow.loginCredentialsId; 
-        }
-
-        try {
-            // Determine API Call: UpdateUser or PostUser
-            const response = selectedRow ? await UpdateUser(data) : await PostUser(data); 
-
-            if (response.value === 0) {
-                setUserError(response.message);
-                setSnackbar({ open: true, message: response.message, severity: "error" });
-            } else {
-                await fetchUserData(); // Refresh data table
-                handleClose();
-                setSnackbar({
-                    open: true,
-                    message: selectedRow ? "User updated successfully!" : "User added successfully!",
-                    severity: "success",
-                });
-            }
-        } catch (error) {
-            const errorMessage = error.response?.data?.message || "Error submitting user data";
-            setUserError(errorMessage);
-            setSnackbar({ open: true, message: errorMessage, severity: "error" });
-        }
+    const data = {
+      username: event.username,
+      password: event.password,
+      mobile: event.mobile,
+      email: event.email,
+      role: event.role,
+      pageAccessLevel: finalPageAccessLevel,
+      accessList: event.accessList || [], 
     };
-    // --------------------------------
+    
+    if (selectedRow) {
+      data.id = selectedRow.loginCredentialsId; 
+    }
 
-    const handleDeleteClick = (id) => {
-        setUserIdToDelete(id);
-        setDeleteDialogOpen(true);
-    };
+    try {
+      const response = selectedRow ? await UpdateUser(data) : await PostUser(data); 
 
-    const handleDeleteConfirm = async () => {
-        try {
-            await deleteUser(userIdToDelete);
-            await fetchUserData();
-            setSnackbar({ open: true, message: "User deleted successfully!", severity: "success" });
-        } catch (error) {
-            setSnackbar({ open: true, message: "Error deleting user", severity: "error" });
-        } finally {
-            setDeleteDialogOpen(false);
-            setUserIdToDelete(null);
-        }
-    };
+      if (response.value === 0) {
+        setUserError(response.message);
+        setSnackbar({ open: true, message: response.message, severity: "error" });
+      } else {
+        await fetchUserData();
+        handleClose();
+        setSnackbar({
+          open: true,
+          message: selectedRow ? "User updated successfully!" : "User added successfully!",
+          severity: "success",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Error submitting user data";
+      setUserError(errorMessage);
+      setSnackbar({ open: true, message: errorMessage, severity: "error" });
+    }
+  };
+
+  const handleDeleteClick = (id) => {
+    setUserIdToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteUser(userIdToDelete);
+      await fetchUserData();
+      setSnackbar({ open: true, message: "User deleted successfully!", severity: "success" });
+    } catch (error) {
+      setSnackbar({ open: true, message: "Error deleting user", severity: "error" });
+    } finally {
+      setDeleteDialogOpen(false);
+      setUserIdToDelete(null);
+    }
+  };
+
+  // Password Popover Content
+  const PasswordPopoverContent = () => (
+    <Box sx={{ p: 2, minWidth: 250, maxWidth: 300 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "bold" }}>
+        Password Requirements
+      </Typography>
+      
+      <Box sx={{ mb: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="caption" sx={{ fontWeight: "bold", color: passwordStrength.color }}>
+            Strength: {passwordStrength.label || "Not set"}
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#666" }}>
+            {Object.values(passwordStrength.requirements).filter(Boolean).length}/5
+          </Typography>
+        </Box>
+        <Box sx={{ 
+          height: "4px", 
+          borderRadius: "2px", 
+          mt: 0.5,
+          width: "100%",
+          backgroundColor: "#e0e0e0",
+          overflow: "hidden"
+        }}>
+          <Box sx={{ 
+            height: "100%", 
+            width: `${(passwordStrength.score / 3) * 100}%`, 
+            backgroundColor: passwordStrength.color || "#e0e0e0",
+            transition: "all 0.3s ease"
+          }} />
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 0.3 }}>
+          <span style={{ color: passwordStrength.requirements.length ? "#4CAF50" : "#ff4444", fontSize: "14px" }}>
+            {passwordStrength.requirements.length ? "✓" : "✗"}
+          </span>
+          <Typography variant="caption" sx={{ 
+            color: passwordStrength.requirements.length ? "#333" : "#ff4444",
+            fontSize: "11px"
+          }}>
+            Minimum 10 characters
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 0.3 }}>
+          <span style={{ color: passwordStrength.requirements.uppercase ? "#4CAF50" : "#ff4444", fontSize: "14px" }}>
+            {passwordStrength.requirements.uppercase ? "✓" : "✗"}
+          </span>
+          <Typography variant="caption" sx={{ 
+            color: passwordStrength.requirements.uppercase ? "#333" : "#ff4444",
+            fontSize: "11px"
+          }}>
+            At least one uppercase letter
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 0.3 }}>
+          <span style={{ color: passwordStrength.requirements.lowercase ? "#4CAF50" : "#ff4444", fontSize: "14px" }}>
+            {passwordStrength.requirements.lowercase ? "✓" : "✗"}
+          </span>
+          <Typography variant="caption" sx={{ 
+            color: passwordStrength.requirements.lowercase ? "#333" : "#ff4444",
+            fontSize: "11px"
+          }}>
+            At least one lowercase letter
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 0.3 }}>
+          <span style={{ color: passwordStrength.requirements.number ? "#4CAF50" : "#ff4444", fontSize: "14px" }}>
+            {passwordStrength.requirements.number ? "✓" : "✗"}
+          </span>
+          <Typography variant="caption" sx={{ 
+            color: passwordStrength.requirements.number ? "#333" : "#ff4444",
+            fontSize: "11px"
+          }}>
+            At least one number
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, py: 0.3 }}>
+          <span style={{ color: passwordStrength.requirements.symbol ? "#4CAF50" : "#ff4444", fontSize: "14px" }}>
+            {passwordStrength.requirements.symbol ? "✓" : "✗"}
+          </span>
+          <Typography variant="caption" sx={{ 
+            color: passwordStrength.requirements.symbol ? "#333" : "#ff4444",
+            fontSize: "11px"
+          }}>
+            At least one special character
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
 
   return (
     <Box p="3px 5px 30px 5px">
@@ -373,6 +600,13 @@ const Team = () => {
         circleOptions={circleOptions}
         handleStateChange={handleStateChange}
         viewMode={viewMode}
+        passwordStrength={passwordStrength}
+        handlePasswordChange={handlePasswordChange}
+        handlePasswordFocus={handlePasswordFocus}
+        handlePasswordBlur={handlePasswordBlur}
+        passwordAnchorEl={passwordAnchorEl}
+        showPasswordPopover={showPasswordPopover}
+        PasswordPopoverContent={PasswordPopoverContent}
       />
 
       <Snackbar
@@ -416,182 +650,176 @@ const Team = () => {
 };
 
 export const UserTable = ({ userData, handleOpen, handleDelete, colors }) => {
-    const [openCirclesDialog, setOpenCirclesDialog] = useState(false);
-    const [selectedCircles, setSelectedCircles] = useState([]);
+  const [openCirclesDialog, setOpenCirclesDialog] = useState(false);
+  const [selectedCircles, setSelectedCircles] = useState([]);
 
-    const handleCloseCirclesDialog = () => {
-        setOpenCirclesDialog(false);
-        setSelectedCircles([]);
-    };
+  const handleCloseCirclesDialog = () => {
+    setOpenCirclesDialog(false);
+    setSelectedCircles([]);
+  };
 
-    return (
-        <Box
-            m="10px 0 0 0"
-            sx={{
-                border: "1px solid black",
-                height: "67vh",
-                overflowY: "auto",
-                borderRadius: "6px",
-                boxShadow: "0 4px 10px rgba(19, 17, 17, 0.5)",
-            }}
-        >
-            <Table sx={{ backgroundColor: colors.primary[100] }}>
-                <TableHead>
-                    <TableRow>
-                        {["User Name", "Phone Number", "Email", "Access Level", "Actions"].map(
-                            (header) => (
-                                <TableCell
-                                    key={header}
-                                    sx={{
-                                        fontWeight: "bold",
-                                        textAlign: "center",
-                                        background: "linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))",
-                                        color: "black",
-                                        padding: "12px",
-                                    }}
-                                >
-                                    {header}
-                                </TableCell>
-                            )
-                        )}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {userData.map((row) => (
-                        <TableRow key={row.loginCredentialsId}>
-                            <TableCell
-                                sx={{
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    color: colors.primary[200],
-                                    border: colors.primary[300],
-                                }}
-                            >
-                                {row.username}
-                            </TableCell>
-                            <TableCell
-                                sx={{
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    color: colors.primary[200],
-                                    border: colors.primary[300],
-                                }}
-                            >
-                                {/* CRITICAL: Uses the correct mobile field */}
-                                {row.mobile} 
-                            </TableCell>
-                            <TableCell
-                                sx={{
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    color: colors.primary[200],
-                                    border: colors.primary[300],
-                                }}
-                            >
-                                {row.email}
-                            </TableCell>
-                            <TableCell
-                                sx={{
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    color: colors.primary[200],
-                                    border: colors.primary[300],
-                                }}
-                            >
-                                <Box
-                                    display="flex"
-                                    justifyContent="center"
-                                    backgroundColor={
-                                        row.role === "ADMIN"
-                                            ? colors.greenAccent[600]
-                                            : row.role === "SUPERADMIN"
-                                                ? colors.greenAccent[700]
-                                                : colors.greenAccent[700]
-                                    }
-                                    borderRadius="4px"
-                                >
-                                    {row.role === "ADMIN" && <AdminIcon />}
-                                    {row.role === "SUPERADMIN" && <SuperAdminIcon />}
-                                    {row.role === "USER" && <UserIcon />}
-                                    <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-                                        {row.role}
-                                    </Typography>
-                                </Box>
-                            </TableCell>
-                            <TableCell
-                                sx={{
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                    color: colors.primary[200],
-                                    border: colors.primary[300],
-                                }}
-                            >
-                                {/* View Button (Opens modal in 'view' mode) */}
-                                <IconButton onClick={() => handleOpen("view", row)}>
-                                    <Eye sx={{ color: colors.primary[200] }} />
-                                </IconButton>
-                                {/* Edit Button (Opens modal in 'edit' mode) */}
-                                <IconButton onClick={() => handleOpen("edit", row)}>
-                                    <EditIcon sx={{ color: colors.primary[200] }} />
-                                </IconButton>
-                                {/* Delete Button */}
-                                <IconButton color="error" onClick={() => handleDelete(row.loginCredentialsId)}>
-                                    <DeleteIcon />
-                                </IconButton>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-
-            {/* Dialog for Selected Circles (Kept as per original structure, but unused in table logic above) */}
-            <Dialog
-                open={openCirclesDialog}
-                onClose={handleCloseCirclesDialog}
+  return (
+    <Box
+      m="10px 0 0 0"
+      sx={{
+        border: "1px solid black",
+        height: "67vh",
+        overflowY: "auto",
+        borderRadius: "6px",
+        boxShadow: "0 4px 10px rgba(19, 17, 17, 0.5)",
+      }}
+    >
+      <Table sx={{ backgroundColor: colors.primary[100] }}>
+        <TableHead>
+          <TableRow>
+            {["User Name", "Phone Number", "Email", "Access Level", "Actions"].map(
+              (header) => (
+                <TableCell
+                  key={header}
+                  sx={{
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    background: "linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))",
+                    color: "black",
+                    padding: "12px",
+                  }}
+                >
+                  {header}
+                </TableCell>
+              )
+            )}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {userData.map((row) => (
+            <TableRow key={row.loginCredentialsId}>
+              <TableCell
                 sx={{
-                    "& .MuiDialog-paper": {
-                        backgroundColor: colors.primary[100],
-                        color: colors.primary[200],
-                        maxWidth: "350px",
-                        width: "80vw",
-                        borderRadius: "8px",
-                    },
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: colors.primary[200],
+                  border: colors.primary[300],
                 }}
-            >
-                <DialogTitle sx={{ fontSize: "0.9rem", color: colors.primary[200] }}>
-                    Selected Circles
-                </DialogTitle>
-                <DialogContent sx={{ padding: "8px" }}>
-                    <List dense>
-                        {selectedCircles.length > 0 ? (
-                            selectedCircles.map((circle, index) => (
-                                <ListItem key={index}>
-                                    <ListItemText
-                                        primary={circle}
-                                        primaryTypographyProps={{
-                                            fontSize: "0.75rem",
-                                            color: colors.primary[200],
-                                        }}
-                                    />
-                                </ListItem>
-                            ))
-                        ) : (
-                            <ListItem>
-                                <ListItemText
-                                    primary="No circles selected"
-                                    primaryTypographyProps={{
-                                        fontSize: "0.75rem",
-                                        color: colors.grey[500],
-                                    }}
-                                />
-                            </ListItem>
-                        )}
-                    </List>
-                </DialogContent>
-            </Dialog>
-        </Box>
-    );
-};
+              >
+                {row.username}
+              </TableCell>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: colors.primary[200],
+                  border: colors.primary[300],
+                }}
+              >
+                {row.mobile} 
+              </TableCell>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: colors.primary[200],
+                  border: colors.primary[300],
+                }}
+              >
+                {row.email}
+              </TableCell>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: colors.primary[200],
+                  border: colors.primary[300],
+                }}
+              >
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  backgroundColor={
+                    row.role === "ADMIN"
+                      ? colors.greenAccent[600]
+                      : row.role === "SUPERADMIN"
+                        ? colors.greenAccent[700]
+                        : colors.greenAccent[700]
+                  }
+                  borderRadius="4px"
+                >
+                  {row.role === "ADMIN" && <AdminIcon />}
+                  {row.role === "SUPERADMIN" && <SuperAdminIcon />}
+                  {row.role === "USER" && <UserIcon />}
+                  <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
+                    {row.role}
+                  </Typography>
+                </Box>
+              </TableCell>
+              <TableCell
+                sx={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  color: colors.primary[200],
+                  border: colors.primary[300],
+                }}
+              >
+                <IconButton onClick={() => handleOpen("view", row)}>
+                  <Eye sx={{ color: colors.primary[200] }} />
+                </IconButton>
+                <IconButton onClick={() => handleOpen("edit", row)}>
+                  <EditIcon sx={{ color: colors.primary[200] }} />
+                </IconButton>
+                <IconButton color="error" onClick={() => handleDelete(row.loginCredentialsId)}>
+                  <DeleteIcon />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
+      <Dialog
+        open={openCirclesDialog}
+        onClose={handleCloseCirclesDialog}
+        sx={{
+          "& .MuiDialog-paper": {
+            backgroundColor: colors.primary[100],
+            color: colors.primary[200],
+            maxWidth: "350px",
+            width: "80vw",
+            borderRadius: "8px",
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontSize: "0.9rem", color: colors.primary[200] }}>
+          Selected Circles
+        </DialogTitle>
+        <DialogContent sx={{ padding: "8px" }}>
+          <List dense>
+            {selectedCircles.length > 0 ? (
+              selectedCircles.map((circle, index) => (
+                <ListItem key={index}>
+                  <ListItemText
+                    primary={circle}
+                    primaryTypographyProps={{
+                      fontSize: "0.75rem",
+                      color: colors.primary[200],
+                    }}
+                  />
+                </ListItem>
+              ))
+            ) : (
+              <ListItem>
+                <ListItemText
+                  primary="No circles selected"
+                  primaryTypographyProps={{
+                    fontSize: "0.75rem",
+                    color: colors.grey[500],
+                  }}
+                />
+              </ListItem>
+            )}
+          </List>
+        </DialogContent>
+      </Dialog>
+    </Box>
+  );
+};
 
 export default Team;

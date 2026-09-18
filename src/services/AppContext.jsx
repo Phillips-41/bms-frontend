@@ -73,7 +73,7 @@ export const AppProvider = ({ children }) => {
   const[deviceId,setDeviceId]=useState('');
   const [area, setArea] = useState('');
   const [areaOptions, setAreaOptions] = useState([]);
-
+const [configMissingOpen, setConfigMissingOpen] = useState(false);
   useEffect(() => {
     const fetchOptions = async () => {
    if (!token || token.trim() === "") return; 
@@ -123,16 +123,42 @@ export const AppProvider = ({ children }) => {
    // if (id === deviceId) return;
 
     // Get new manufacturer details
-    if(id!==deviceId){
-    const manufacturerDetails = await fetchManufacturerDetails(area);
-    
+    if (id !== deviceId) {
+  let manufacturerDetails = null;
+  try {
+    manufacturerDetails = await fetchManufacturerDetails(area);
+  } catch (mfgError) {
+    console.error("Manufacturer details error:", mfgError);
+    manufacturerDetails = null;
+  }
 
-    // ===== (1) Update Mdata ONLY if changed =====
-    setMdata(prev => {
+  if (
+    manufacturerDetails == null ||
+    (typeof manufacturerDetails === "object" &&
+      Object.keys(manufacturerDetails).length === 0)
+  ) {
+    // No configuration for this area
+    setConfigMissingOpen(true);
+    setMdata({
+      ahCapacity: "",
+      vendorName: "",
+      location: "",
+      latitude: 0,
+      longitude: 0,
+      siteId: "",
+      serialNumber: "",
+      packetDateTime: "",
+      customer: "",
+      batterySerialNumber: "",
+      id: "",
+    });
+  } else {
+    setMdata((prev) => {
       const newMdata = { ...prev, ...manufacturerDetails };
       return isEqual(prev, newMdata) ? prev : newMdata;
     });
   }
+}
 
     // ===== (2) Update data ONLY if changed =====
     if (deviceDataDTO?.length > 0 ) {
@@ -285,6 +311,7 @@ export const AppProvider = ({ children }) => {
     setToken("");
     setUserRole("");
     setUsername("");
+    resetAppState();
     if (navigate) {
       navigate("/login"); 
     } 
@@ -374,6 +401,70 @@ export const AppProvider = ({ children }) => {
 
   };
 
+  const resetAppState = () => {
+  // Live monitoring
+  setData([]);
+  setMdata({
+    ahCapacity: "",
+    vendorName: "",
+    location: "",
+    latitude: 0,
+    longitude: 0,
+    siteId: "",
+    serialNumber: "",
+    packetDateTime: "",
+    customer: "",
+    batterySerialNumber: "",
+    id: "",
+  });
+  setCharger(null);
+  setLiveTime(null);
+  setLocation(null);
+  setDeviceId("");
+  setStatus(null);
+  setIsChecked(false); // stop 5s polling
+
+  // Filters
+  setSiteId("");
+  setSerialNumber("");
+  setSiteOptions([]);
+  setSiteIdOptions([]);
+  setSerialNumberOptions([]);
+  setState("");
+  setZone("");
+  setCircle("");
+  setDivision("");
+  setArea("");
+  setStateOptions([]);
+  setZoneOptions([]);
+  setCircleOptions([]);
+  setDivisionOptions([]);
+  setAreaOptions([]);
+
+  // Analytics
+  setStartDate("");
+  setEndDate("");
+  setYear("");
+  setMonth("");
+  setDayWiseData([]);
+  setAlarmsData([]);
+  setrealTimeData([]);
+  setPage(0);
+  setRowsPerPage(10);
+  setTotalRecords(0);
+  setPageType("");
+  setHistoricalType("");
+  setLoadingReport(false);
+  setErrors({
+    siteId: false,
+    serialNumber: false,
+    startDate: false,
+    endDate: false,
+  });
+
+  setMapMarkers([]);
+};
+
   const clearOptions =  () => {
     setIsChecked(false);
     setDeviceId('');
@@ -445,7 +536,8 @@ export const AppProvider = ({ children }) => {
     page, setPage,rowsPerPage, setRowsPerPage,loadingReport,errors,totalRecords, setTotalRecords,siteIdOptions,
     handleAnalytics,setIsChecked,isChecked,setState,setCircle,historicalType,divisionOptions,setDivisionOptions,division,setDivision,
     setHistoricalType,setCircleOptions,status,zone,setZone,zoneOptions,setZoneOptions,handleZoneChange, 
-    area, areaOptions, handleAreaChange, setArea,handleDivisionChange,setAreaOptions
+    area, areaOptions, handleAreaChange, setArea,handleDivisionChange,setAreaOptions,configMissingOpen,
+setConfigMissingOpen,
   };
  
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

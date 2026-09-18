@@ -19,6 +19,17 @@ import {
   DialogActions,
   useTheme,
   Paper,
+  Select,
+  MenuItem,
+  InputLabel,
+  CircularProgress,
+  Chip,
+  FormControlLabel,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
 } from '@mui/material';
 import SearchAndAddButtons from '../SearchAndAddButtons/index';
 import { AppContext } from "../../../services/AppContext";
@@ -152,6 +163,28 @@ const [selectedArea, setSelectedArea] = useState('' );
     area: false,
   });
 
+  // Document upload states
+  const [documentDescription, setDocumentDescription] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState([]); // track docs from API responses
+  const [selectedDocIds, setSelectedDocIds] = useState([]);
+  const [isDocumentLoading, setIsDocumentLoading] = useState(false);
+
+  const descriptionOptions = [
+    'Not 2V Batteries',
+    'Charger Not working',
+    'Charger AC/DC MCB issue',
+    'Charger OLD Model',
+    'Charger New Model,Need MSEDCL Technician Support',
+    'Rust issue',
+    'Weak Battiries',
+    'Network Issue',
+    'Underground wiring to Charger',
+    'Substation shut down',
+    'Other',
+  ];
+
   useEffect(() => {
   
     fetchData();
@@ -256,8 +289,11 @@ const [selectedArea, setSelectedArea] = useState('' );
       setOpenNoDataDialog(true);
       setFormData({});
       setIsSearchSuccessful(false);
-    } else if (response?.data) {
-      const siteData = response.data;
+      setUploadedDocuments([]);
+      setSelectedDocIds([]);
+    } else if (response?.data || (response && !response.status)) {
+      // Support both shapes: full axios-like { data } or already-unwrapped body from apiService
+      const siteData = response?.data || response;
       const parsedFirstUsedDate = parseDateToYYYYMMDD(siteData.manufacturerDTO?.firstUsedDate || '');
       const combinedData = {
         state: siteData.state || '',
@@ -297,6 +333,18 @@ const [selectedArea, setSelectedArea] = useState('' );
       setSelectedCircle(combinedData.circle);
       setSelectedArea(combinedData.area);
       setIsSearchSuccessful(true);
+
+      // ---------- Documents from documentDto (only if not null) ----------
+      // Backend: documentDto { description, documentUrlsList: List<DocumentUrls> }
+      // Show nothing when null / undefined / empty.
+      const docDto = siteData.documentDto ?? siteData.documentDTO ?? null;
+      if (docDto != null) {
+        const mapped = mapDocumentDtoToList(docDto);
+        setUploadedDocuments(mapped);
+      } else {
+        setUploadedDocuments([]);
+      }
+      setSelectedDocIds([]);
     }
   } catch (error) {
     console.error('Error fetching site details:', error);
@@ -304,6 +352,8 @@ const [selectedArea, setSelectedArea] = useState('' );
       setOpenNoDataDialog(true);
       setFormData({});
       setIsSearchSuccessful(false);
+      setUploadedDocuments([]);
+      setSelectedDocIds([]);
     }
   }
 };
@@ -537,6 +587,12 @@ const [selectedArea, setSelectedArea] = useState('' );
     setSelectedZone('');
     setSelectedCircle('');
     setSelectedArea('');
+    // Reset document states when site changes
+    setDocumentDescription('');
+    setCustomDescription('');
+    setSelectedFiles([]);
+    setUploadedDocuments([]);
+    setSelectedDocIds([]);
   }, [siteId]); 
 
   const renderFormFields = (columns) => {
@@ -1190,6 +1246,285 @@ const [selectedArea, setSelectedArea] = useState('' );
     setSelectedDivision('');
     setSelectedArea('');
     setIsSearchSuccessful(false); // Reset search success on clear
+    // Reset document states
+    setDocumentDescription('');
+    setCustomDescription('');
+    setSelectedFiles([]);
+    setUploadedDocuments([]);
+    setSelectedDocIds([]);
+  };
+
+  // ========== Document helpers ==========
+  /**
+   * Maps backend documentDto (object or array) into the list format used by the UI.
+   *
+   * Backend shapes:
+   *   documentDto = {
+   *     description: string,
+   *     documentUrlsList: [
+   *       { id: Long, originalFilename: string, size: Long, contentType: string }
+   *     ]
+   *   }
+   *   (or an array of such objects)
+   *
+   * We flatten so each file becomes one selectable row.
+   * The id used for DELETE comes from DocumentUrls.id.
+   * Returns [] when null/undefined so the list is hidden.
+   */
+  const mapDocumentDtoToList = (dto) => {
+    if (dto == null) return [];
+    const {description=""} = dto;
+    setDocumentDescription(description);
+    const items = Array.isArray(dto) ? dto : [dto];
+    const result = [];
+
+    items.filter((item) => item != null).forEach((item, groupIdx) => {
+      const description = item.description || '';
+      const files = item.documentUrlsList || item.documentUrls || item.files || [];
+
+      if (!Array.isArray(files) || files.length === 0) {
+        // Description exists but no files – still show one row if parent has an id
+        const fallbackId = item.id ?? item.documentId ?? `group-${groupIdx}`;
+        result.push({
+          id: fallbackId,
+          description,
+          fileName: 'No files',
+          size: null,
+          contentType: null,
+          files: [],
+          raw: item,
+        });
+        return;
+      }
+
+      // One row per file – id is DocumentUrls.id (required for delete)
+      files.forEach((f, fileIdx) => {
+        if (f == null) return;
+        result.push({
+          id: f.id ?? f.documentId ?? `${groupIdx}-${fileIdx}`,
+          description,
+          fileName: f.originalFilename || f.fileName || f.name || 'file',
+          size: f.size ?? null,
+          contentType: f.contentType ?? null,
+          files: [f],
+          raw: item,
+        });
+      });
+    });
+
+    return result;
+  };
+
+  // ========== Document Upload / Update / Delete Handlers ==========
+  const getEffectiveDescription = () => {
+    if (documentDescription === 'Other') {
+      return customDescription.trim();
+    }
+    return documentDescription;
+  };
+
+  const getSubstationParam = () => {
+    // substation query param is the same as area
+    return formData.area || selectedArea || '';
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    // Filter allowed types: jpeg, jpg, pdf, doc, docx
+    const allowed = files.filter((f) => {
+      const name = f.name.toLowerCase();
+      return (
+        name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.pdf') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx')
+      );
+    });
+    if (allowed.length !== files.length) {
+      toast.warn('Some files were skipped. Only .jpg, .jpeg, .pdf, .doc, .docx are allowed.');
+    }
+    setSelectedFiles(allowed);
+  };
+
+  const handleUploadDocuments = async () => {
+    const substation = getSubstationParam();
+    const description = getEffectiveDescription();
+
+    if (!substation) {
+      toast.error('Area (substation) is required. Please select/search a site first.');
+      return;
+    }
+    if (!description) {
+      toast.error('Please select or enter a description.');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      toast.error('Please select at least one file to upload.');
+      return;
+    }
+
+    setIsDocumentLoading(true);
+    try {
+      const formDataPayload = new FormData();
+      selectedFiles.forEach((file) => {
+        formDataPayload.append('files', file);
+      });
+
+      const response = await apiClient.post(
+        `/api/uploadDocuments`,
+        formDataPayload,
+        {
+          params: { substation, description },
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+
+      // Try to capture returned document info (flexible for different response shapes)
+      const data = response.data;
+      let newDocs = [];
+      if (Array.isArray(data)) {
+        newDocs = data;
+      } else if (data?.documents && Array.isArray(data.documents)) {
+        newDocs = data.documents;
+      } else if (data?.id) {
+        newDocs = [data];
+      } else if (data) {
+        // fallback: store whatever came back with local meta
+        newDocs = [{ ...data, description, fileName: selectedFiles.map((f) => f.name).join(', ') }];
+      }
+
+      setUploadedDocuments((prev) => [...prev, ...newDocs]);
+      setSelectedFiles([]);
+      // clear file input
+      const fileInput = document.getElementById('document-file-input');
+      if (fileInput) fileInput.value = '';
+
+      toast.success('Documents uploaded successfully!');
+      setSnackbarMessage('Documents uploaded successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Upload error:', error);
+      const msg = error.response?.data?.message || error.message || 'Failed to upload documents.';
+      toast.error(msg);
+      setSnackbarMessage(msg);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsDocumentLoading(false);
+    }
+  };
+
+  const handleUpdateDocuments = async () => {
+    const substation = getSubstationParam();
+    const description = getEffectiveDescription();
+
+    if (!substation) {
+      toast.error('Area (substation) is required. Please select/search a site first.');
+      return;
+    }
+    if (!description) {
+      toast.error('Please select or enter a description.');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      toast.error('Please select at least one file to add.');
+      return;
+    }
+
+    setIsDocumentLoading(true);
+    try {
+      const formDataPayload = new FormData();
+      selectedFiles.forEach((file) => {
+        formDataPayload.append('files', file);
+      });
+
+      const response = await apiClient.post(
+        `/api/updateDocuments`,
+        formDataPayload,
+        {
+          params: { substation, description },
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+
+      const data = response.data;
+      let newDocs = [];
+      if (Array.isArray(data)) {
+        newDocs = data;
+      } else if (data?.documents && Array.isArray(data.documents)) {
+        newDocs = data.documents;
+      } else if (data?.id) {
+        newDocs = [data];
+      } else if (data) {
+        newDocs = [{ ...data, description, fileName: selectedFiles.map((f) => f.name).join(', ') }];
+      }
+
+      setUploadedDocuments((prev) => [...prev, ...newDocs]);
+      setSelectedFiles([]);
+      const fileInput = document.getElementById('document-file-input');
+      if (fileInput) fileInput.value = '';
+
+      toast.success('Documents added successfully (update)!');
+      setSnackbarMessage('Documents added successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Update documents error:', error);
+      const msg = error.response?.data?.message || error.message || 'Failed to update documents.';
+      toast.error(msg);
+      setSnackbarMessage(msg);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsDocumentLoading(false);
+    }
+  };
+
+  const handleDeleteDocuments = async () => {
+    if (selectedDocIds.length === 0) {
+      toast.error('Please select at least one document to delete (from the list below).');
+      return;
+    }
+
+    setIsDocumentLoading(true);
+    try {
+      // DELETE with query param documentIds (array)
+      const response = await apiClient.delete(`/api/deleteDocuments`, {
+        params: { documentIds: selectedDocIds },
+        paramsSerializer: (params) => {
+          // ensure documentIds=1&documentIds=2 style
+          const searchParams = new URLSearchParams();
+          (params.documentIds || []).forEach((id) => searchParams.append('documentIds', id));
+          return searchParams.toString();
+        },
+      });
+
+      // Remove deleted ones from local state
+      setUploadedDocuments((prev) => prev.filter((doc) => !selectedDocIds.includes(doc.id)));
+      setSelectedDocIds([]);
+
+      toast.success(response.data || 'Documents deleted successfully!');
+      setSnackbarMessage('Documents deleted successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Delete documents error:', error);
+      const msg = error.response?.data?.message || error.message || 'Failed to delete documents.';
+      toast.error(msg);
+      setSnackbarMessage(msg);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsDocumentLoading(false);
+    }
+  };
+
+  const toggleDocSelection = (id) => {
+    setSelectedDocIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -1253,6 +1588,268 @@ const [selectedArea, setSelectedArea] = useState('' );
           Threshold Values
         </Typography>
         {renderFormFields(columnMappingsPart3)}
+
+        {/* ========== Site Installation Documents / Issues ========== */}
+        {(isSearchSuccessful || isAdding || formData.area || selectedArea) && (
+          <>
+            <Typography
+              variant="h5"
+              sx={{
+                marginTop: '24px',
+                fontSize: '15px',
+                fontWeight: '800',
+                background: 'linear-gradient(to bottom, #d82b27, #f09819)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Site Installation Documents / Issues
+            </Typography>
+            <Typography variant="body2" sx={{ color: colors.primary[200], mb: 1, fontSize: '12px' }}>
+              Upload documents when the device cannot be installed. Description is required. Upload works independently of Save Changes.
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                alignItems: 'flex-start',
+                mt: 1,
+                mb: 2,
+              }}
+            >
+              {/* Description dropdown */}
+              <FormControl size="small" sx={{ minWidth: 280 }}>
+                <InputLabel
+                  sx={{
+                    fontWeight: 'bold',
+                    color: colors.primary[200],
+                    fontSize: '12px',
+                    '&.Mui-focused': { color: colors.primary[200] },
+                  }}
+                >
+                  Description
+                </InputLabel>
+                <Select
+                  value={documentDescription}
+                  label="Description"
+                  onChange={(e) => {
+                    setDocumentDescription(e.target.value);
+                    if (e.target.value !== 'Other') setCustomDescription('');
+                  }}
+                  sx={{
+                    height: '35px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: colors.primary[200],
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#75767B !important' },
+                    '& .MuiSvgIcon-root': { color: colors.primary[200] },
+                  }}
+                >
+                  {descriptionOptions.map((opt) => (
+                    <MenuItem key={opt} value={opt} sx={{ fontSize: '12px' }}>
+                      {opt}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* Custom description when Other is selected */}
+              {documentDescription === 'Other' && (
+                <TextField
+                  size="small"
+                  label="Enter your description"
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  sx={{
+                    minWidth: 260,
+                    '& .MuiInputBase-root': {
+                      height: '35px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: colors.primary[200],
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: colors.primary[200],
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#75767B !important' },
+                  }}
+                />
+              )}
+
+              {/* File input */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  size="small"
+                  sx={{
+                    height: '35px',
+                    fontSize: '12px',
+                    borderColor: '#75767B',
+                    color: colors.primary[200],
+                    textTransform: 'none',
+                  }}
+                >
+                  Choose Files
+                  <input
+                    id="document-file-input"
+                    type="file"
+                    hidden
+                    multiple
+                    accept=".jpg,.jpeg,.pdf,.doc,.docx,image/jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={handleFileChange}
+                  />
+                </Button>
+                {selectedFiles.length > 0 && (
+                  <Typography variant="caption" sx={{ color: colors.primary[200], fontSize: '11px' }}>
+                    {selectedFiles.length} file(s) selected
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* Selected file chips */}
+            {selectedFiles.length > 0 && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
+                {selectedFiles.map((f, idx) => (
+                  <Chip
+                    key={idx}
+                    label={f.name}
+                    size="small"
+                    onDelete={() =>
+                      setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))
+                    }
+                    sx={{ fontSize: '11px' }}
+                  />
+                ))}
+              </Box>
+            )}
+
+            {/* Upload / Update / Delete buttons — same line */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                size="small"
+                disabled={isDocumentLoading}
+                onClick={handleUploadDocuments}
+                sx={{
+                  fontSize: '12px',
+                  background: '#d82b27',
+                  color: '#fff',
+                  textTransform: 'none',
+                  minWidth: 90,
+                }}
+              >
+                {isDocumentLoading ? <CircularProgress size={18} color="inherit" /> : 'Upload'}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={isDocumentLoading}
+                onClick={handleUpdateDocuments}
+                sx={{
+                  fontSize: '12px',
+                  background: '#f09819',
+                  color: '#fff',
+                  textTransform: 'none',
+                  minWidth: 90,
+                }}
+              >
+                {isDocumentLoading ? <CircularProgress size={18} color="inherit" /> : 'Update'}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                disabled={isDocumentLoading || selectedDocIds.length === 0}
+                onClick={handleDeleteDocuments}
+                sx={{
+                  fontSize: '12px',
+                  background: '#555',
+                  color: '#fff',
+                  textTransform: 'none',
+                  minWidth: 90,
+                }}
+              >
+                {isDocumentLoading ? <CircularProgress size={18} color="inherit" /> : 'Delete'}
+              </Button>
+              {selectedDocIds.length > 0 && (
+                <Typography variant="caption" sx={{ color: colors.primary[200], fontSize: '11px' }}>
+                  {selectedDocIds.length} selected for delete
+                </Typography>
+              )}
+            </Box>
+
+            {/* Existing / uploaded documents list — only shown when not null / has items */}
+            {uploadedDocuments.length > 0 && (
+              <Box
+                sx={{
+                  border: '1px solid #75767B',
+                  borderRadius: 1,
+                  p: 1,
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 'bold', color: colors.primary[200], fontSize: '11px' }}
+                >
+                  Existing documents — select to delete:
+                </Typography>
+                <List dense disablePadding>
+                  {uploadedDocuments.map((doc, idx) => {
+                    const id = doc.id ?? doc.documentId ?? idx;
+                    const description = doc.description || 'No description';
+                    const fileName = doc.fileName || 'No files';
+                    return (
+                      <ListItem
+                        key={`${id}-${idx}`}
+                        dense
+                        disablePadding
+                      >
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <Checkbox
+                            edge="start"
+                            size="small"
+                            checked={selectedDocIds.includes(id)}
+                            onChange={() => toggleDocSelection(id)}
+                            sx={{ color: colors.primary[200], p: 0.5 }}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={fileName}
+                          secondary={description}
+                          primaryTypographyProps={{
+                            fontSize: '12px',
+                            color: colors.primary[200],
+                            fontWeight: 'bold',
+                          }}
+                          secondaryTypographyProps={{
+                            fontSize: '11px',
+                            color: colors.primary[300] || '#aaa',
+                          }}
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </Box>
+            )}
+          </>
+        )}
 
         {(isEditing || isAdding) && (
           <Button

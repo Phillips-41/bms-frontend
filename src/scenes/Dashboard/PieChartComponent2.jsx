@@ -1,4 +1,4 @@
-// src/components/PieChartComponent2.jsx
+
 import React, { useState, useContext ,useEffect,useMemo} from 'react';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { formatToTime } from "../../services/AppContext";
@@ -16,9 +16,9 @@ import { CustomLabel, CustomTooltip } from './PieChartComponent';
 import { circle } from 'leaflet';
 import { tokens } from '../../theme';
 
-const PieChartComponent2 = ({ totolData,data1, handlePieClickCommu,device }) => {
+const PieChartComponent2 = ({ device }) => {
   const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
+  const colors = tokens(theme.palette.mode);
   const { siteId,setSiteId, serialNumber,setSerialNumber, handleSearch ,setState,setCircle,setArea,area} = useContext(AppContext);
   const [clickedSection, setClickedSection] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -338,28 +338,40 @@ if (isXs) {
   outerRadius = 45;
 } else if (isLg) {
   chartSize = 180;
-  chartSizew = 190;
+  chartSizew = 200;
   innerRadius = 15;
   outerRadius = 55;
 } else if (isXl) {
   chartSize = 250;
-  chartSizew = 290;
+  chartSizew = 300;
   innerRadius = 20;
   outerRadius = 80;
 }
 
-// 4. Delete the entire useState declarations and useEffect block completely!
+const pieData = useMemo(() => {
+    if (!device.length) {
+      return [
+        { name: 'Communicating', value: 0 },
+        { name: 'Non-Communicating', value: 0 },
+      ];
+    }
+    const communicating = device.filter((d) => !d.isNotCommunicating).length;
+    return [
+      { name: 'Communicating', value: communicating },
+      { name: 'Non-Communicating', value: device.length - communicating },
+    ];
+  }, [device]);
 
 
   return (
     <Box
       border={1}
-      // borderColor="#FFFF00"
+      borderColor="divider"
       borderRadius={2}
       bgcolor={colors.primary[100]} // ✅ Background color
       color={colors.primary[200]}   // ✅ Text color (same as background)
       // padding="1px 20px 15px 18px"
-      boxShadow={3}
+      // boxShadow={3}
       display="flex"
       flexDirection="column"
       //marginRight={10}
@@ -369,57 +381,21 @@ if (isXs) {
           xs: '1px 10px 10px 10px',
           sm: '1px 15px 12px 15px',
           md: '1px 10px 10px 10px',
-          lg: '1px 10px 1px 10px',
+          lg: '1px 5px 1px 5px',
           xl: '1px 10px 10px 10px',
         },
         height: {
           xs: '180px',
           sm: '165px',
           md: '165px',
-          lg: '230px',
-          // lg:'160px',
-          xl: '280px',
+          lg: '220px',
+          xl: '300px',
         },
-        width: {
-          xs: '280px',
-          sm: '300px',
-          md: '190px',
-        // lg: '260px',
-          lg: '530px',
-          // xl: '330px',
-          xl: '670px',
-        },
+       width : '100%'
       }}
     >
-      <Typography
-      variant="h5"
-      sx={{
-        fontWeight: {
-          xs: 600, // Slightly lighter for mobile
-          sm: 700, // Standard bold for tablets
-          md: 700,
-          lg: 700,
-        },
-        fontSize: {
-          xs: '1rem', // Mobile (smaller than h5 default)
-          sm: '1rem', // Small tablets
-          md: '1rem', // Medium screens (closer to h5 default)
-          lg: '1.0rem', // Large screens (slightly larger)
-          xl: '1.3rem'
-        },
-        mb: {
-          xs: 0.5, // Smaller margin-bottom for mobile
-          sm: 0.75,
-          md: 1,
-          lg: 0, // Default gutterBottom spacing
-          xl: 0.1,
-        },
-        lineHeight: 1.2, // Consistent line height for readability
-      }}
-    >
-      Device Status
-      </Typography>
-      <Box 
+   
+      {/* <Box 
         display="flex"
         justifyContent="center"
         alignItems="center"
@@ -427,17 +403,17 @@ if (isXs) {
         sx={{
           flexDirection: "column", // Stack vertically on mobile
           gap: { xs: 1, sm: '1px', md: 0, lg: "0px" }, // Responsive gap between chart and legend
-        // width: '100%',
+          width: '100%',
         // maxWidth: { xs: '100%', sm: '600px', md: '500px', lg: '1200px' }, // Responsive container width
           mx: 'auto',
         }}
-        >
+        > */}
           <PieChart width={chartSizew} height={chartSize}>
             <defs>
               <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
                 <feDropShadow dx="2" dy="2" stdDeviation="3" floodColor="rgba(0, 0, 0, 0.7)" />
               </filter>
-              <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="greenGradient" x1="0%" y1="0%" x2="200%" y2="200%">
                 <stop offset="0%" stopColor="#0d900b" />
                 <stop offset="50%" stopColor="#02DEB2" />
                 <stop offset="100%" stopColor="#62B816" />
@@ -448,7 +424,7 @@ if (isXs) {
               </linearGradient>
             </defs>
             <Pie
-              data={data1}
+              data={pieData}
               dataKey="value"
               nameKey="name"
               cx="50%"
@@ -473,7 +449,6 @@ if (isXs) {
                           dominantBaseline="central"
                           style={{ fontSize: `${fontSize}px`, fontWeight: "bold" }}
                         >
-
                         {value}
                       </text>
                   );
@@ -482,8 +457,8 @@ if (isXs) {
               onClick={handleClick}
               style={{ filter: 'url(#shadow)' }}
             >
-              {data1.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={index === 0 ? 'url(#greenGradient)' : 'url(#notcommuGradient)'} />
+              {pieData.map((_, index) => (
+                <Cell key={index} fill={index === 0 ? 'url(#greenGradient)' : 'url(#notcommuGradient)'} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip/>} />
@@ -499,7 +474,7 @@ if (isXs) {
               maxWidth: { xs: '100%', sm: '300px', md: '250px', lg: '400px' }, // Responsive width
             }}
           >
-              {data1.map((entry, index) => (
+              {pieData.map((entry, index) => (
                 <Box
                   key={index}
                   display="flex"
@@ -513,9 +488,9 @@ if (isXs) {
                     borderRadius="50%"
                   //  mr={{ xs: 0.5, sm: 0.75, md: 1, lg}} // Responsive margin-right
                     sx={{
-                      background: `linear-gradient(to right, ${
-                        index === 0 ? '#0d900b, #02DEB2, #62B816' : '#b5e41c", #71f717'
-                      })`,
+                      background: index === 0
+                                  ? 'linear-gradient(to right, #0d900b, #02DEB2, #62B816)'
+                                  : 'linear-gradient(to right, #e41c38, #F71735)',
                     }}
                   />
                     <Typography
@@ -536,7 +511,7 @@ if (isXs) {
                     </Typography>
                   </Box>
               ))}
-          </Box>
+          {/* </Box> */}
       </Box>
 
       {renderDialog()}

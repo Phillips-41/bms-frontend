@@ -546,6 +546,7 @@ export const fetchStatesDetails = async () => {
   }
 };
 
+
 export const fetchCirclesDetails = async () => {
   try {
     const response = await apiClient.get("/api/circles");
@@ -978,4 +979,33 @@ export const downloadCellsAlarms = async (area, strStartDate, strEndDate) => {
         console.error('Error downloading the Excel file:', error);
         // You might want to show a user-friendly error message here
     }
+};
+
+
+export const fetchDeviceAlarms = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.zone) query.append('zone', params.zone);
+  if (params.circle) query.append('circle', params.circle);
+
+  const url = `${BASE_URL}/device-alarms${query.toString() ? `?${query}` : ''}`;
+  const token = sessionStorage.getItem('token');
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error(`device-alarms failed: ${res.status}`);
+  return res.json();
+};
+
+
+export const fetchDashboardData = async () => {
+  try {
+    const response = await apiClient.get("/api/dashboard");
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetching dashboard data: ", error);
+    throw error;
+  }
 };

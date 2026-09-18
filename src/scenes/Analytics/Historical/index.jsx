@@ -163,81 +163,98 @@ const Historical = () => {
   const cellDataArray= realTimeData.content
   const circleDataArray= realTimeData;
 
-  return (
-    <div>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        // alignItems: "center", 
-        // marginBottom: "10px" 
-      }}>
-        <ReportsBar isHistorical={true} pageType="historical" />
-        <Tooltip title="Export to Excel">
-          <Box sx={{ position: 'relative', marginRight: '20px', marginTop:'8px' }}>
-            <IconButton
-              onClick={handleDownloadExcel}
-              disabled={loadingReport || !area || !startDate || !endDate || isDownloading}
+return (
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",   // fills .content — do NOT use 100vh
+      width: "100%",
+      minHeight: 0,
+      overflow: "hidden",
+    }}
+  >
+    {/* Top bar — fixed height */}
+    <Box
+      sx={{
+        flexShrink: 0,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+      }}
+    >
+      <ReportsBar isHistorical={true} pageType="historical" />
+      <Tooltip title="Export to Excel">
+        <Box sx={{ position: "relative", marginRight: "20px", marginTop: "8px" }}>
+          <IconButton
+            onClick={handleDownloadExcel}
+            disabled={loadingReport || !area || !startDate || !endDate || isDownloading}
+            sx={{
+              backgroundColor: "#4caf50",
+              color: "white",
+              "&:hover": { backgroundColor: "#388e3c" },
+              "&.Mui-disabled": { backgroundColor: "#4caf50", opacity: 0.5 },
+            }}
+          >
+            {downloadComplete ? <CheckCircleIcon /> : <GridOnIcon />}
+          </IconButton>
+          {isDownloading && (
+            <CircularProgress
+              size={40}
               sx={{
-                backgroundColor: '#4caf50',
-                color: 'white',
-                '&:hover': { backgroundColor: '#388e3c' },
-                '&.Mui-disabled': { backgroundColor: '#4caf50', opacity: 0.5 },
+                color: "#4caf50",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                marginTop: "-20px",
+                marginLeft: "-20px",
               }}
-            >
-              {downloadComplete ? (
-                <CheckCircleIcon />
-              ) : (
-                <GridOnIcon />
-              )}
-            </IconButton>
-            {isDownloading && (
-              <CircularProgress
-                size={40}
-                sx={{
-                  color: '#4caf50',
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  marginTop: '-20px',
-                  marginLeft: '-20px',
-                }}
-              />
-            )}
-          </Box>
-        </Tooltip>
-      </div>
+            />
+          )}
+        </Box>
+      </Tooltip>
+    </Box>
 
+    {/* Body — takes remaining height */}
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        px: 1,
+      }}
+    >
       {loadingReport ? (
-        <Box 
+        <Box
           sx={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            height: "379px",
+            flex: 1,
             flexDirection: "column",
-            gap: 2
+            gap: 2,
           }}
         >
           <CircularProgress />
-          <Typography variant="body1" sx={{color:"#fff"}}>Loading historical data...</Typography>
+          <Typography variant="body1" sx={{ color: colors.primary[200] }}>
+            Loading historical data...
+          </Typography>
         </Box>
       ) : dataArray.length > 0 && Object.keys(realTimeData).length > 0 ? (
-        <>{historicalType === "String Details" ?(
-         <Box>
-          <TableContainer
+        historicalType === "String Details" ? (
+          <>
+            {/* Scrollable table */}
+            <TableContainer
               component={Paper}
               sx={{
-                // border: '1px solid white',// White border for visibility
-                ml: 1,
-                mr: 2,
-                backgroundColor: colors.primary[100], // Dark background
-                '& .MuiPaper-root': {
-                  backgroundColor: colors, // Override Paper's default white background
-                },
-                overflowX: 'auto',
-                border: '1px solid black',
-                borderRadius: '8px',
-                maxHeight: { lg: '330px', md: '300px', sm: '270px', xs: '400px', xl: '440px' },
+                flex: 1,
+                minHeight: 0,
+                overflow: "auto",
+                borderRadius: "8px",
+                backgroundColor: colors.primary[100],
+                border: "1px solid black",
               }}
             >
               <Table stickyHeader aria-label="battery monitoring table">
@@ -247,13 +264,14 @@ const Historical = () => {
                       <TableCell
                         key={key}
                         sx={{
-                          fontWeight: 'bold',
-                          background: 'linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))',
+                          fontWeight: "bold",
+                          background:
+                            "linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))",
                           color: colors.primary[200],
-                          padding: '3px',
-                          minWidth: '150px',
-                          whiteSpace: 'nowrap',
-                          textAlign: 'center',
+                          padding: "3px",
+                          minWidth: "150px",
+                          whiteSpace: "nowrap",
+                          textAlign: "center",
                         }}
                       >
                         {columnMappings[key]}
@@ -263,27 +281,32 @@ const Historical = () => {
                 </TableHead>
                 <TableBody>
                   {dataArray.map((row, index) => (
-                    <TableRow
-                      key={index}
-                    >
+                    <TableRow key={index}>
                       {displayedColumns.map((key) => (
                         <TableCell
                           key={key}
                           sx={{
-                            border: colors.primary[300], // Lighter white border
-                            padding: '3px',
-                            fontWeight: 'bold',
-                            whiteSpace: 'nowrap',
-                            textAlign: 'center',
-                            color: colors.primary[200], // White text
-                            backgroundColor:key === 'serverTime' && row.statusId === 1 ? '#ffc458': 'transparent', // Transparent background
+                            border: colors.primary[300],
+                            padding: "3px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap",
+                            textAlign: "center",
+                            color: colors.primary[200],
+                            backgroundColor:
+                              key === "serverTime" && row.statusId === 1
+                                ? "#ffc458"
+                                : "transparent",
                           }}
                         >
-                          {key === 'packetDateTime' || key === 'serverTime'
+                          {key === "packetDateTime" || key === "serverTime"
                             ? formatTimeStamp(row[key])
-                            : key === 'chargeTimeCycle' || key === 'dischargeTimeCycle' || key === 'batteryRunHours'
+                            : key === "chargeTimeCycle" ||
+                              key === "dischargeTimeCycle" ||
+                              key === "batteryRunHours"
                             ? formatDuration(row[key])
-                            : key === 'problemCells' || key === 'cellsConnectedCount' || key === 'chargeOrDischargeCycle'
+                            : key === "problemCells" ||
+                              key === "cellsConnectedCount" ||
+                              key === "chargeOrDischargeCycle"
                             ? formatNumber(row[key], 0)
                             : formatNumber(row[key])}
                         </TableCell>
@@ -294,115 +317,73 @@ const Historical = () => {
               </Table>
             </TableContainer>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              {/* Custom text on the left */}
-                <Typography
-                  sx={{
-                    color: "#ffc458",
-                    fontSize: '12px',
-                    fontFamily: 'Source Sans Pro',
-                    fontWeight: 'bold',
-                    marginLeft: '16px', // Space between text and pagination
-                  }}
-                >
-                  Orange: Stored Packet
-                </Typography>
+            {/* Pagination always visible */}
+            <Box
+              sx={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: colors.primary[100],
+                borderTop: "1px solid",
+                borderColor: "divider",
+                py: 0.25,
+              }}
+            >
+              <Typography
+                sx={{
+                  color: "#ffc458",
+                  fontSize: "12px",
+                  fontFamily: "Source Sans Pro",
+                  fontWeight: "bold",
+                  marginLeft: "16px",
+                }}
+              >
+                Orange: Stored Packet
+              </Typography>
 
-                <TablePagination
-                  rowsPerPageOptions={[25, 50, 75]}
-                  component="div"
-                  count={totalRecords || dataArray.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  sx={{
-                    color: colors.primary[200],
-                    backgroundColor: 'transparent !important',
-                    '& .MuiTablePagination-toolbar': {
-                      height: '35px',
-                      color: colors.primary[200],
-                      backgroundColor: 'transparent !important',
-                    },
-                    '& .MuiTablePagination-selectLabel': {
-                      color: colors.primary[200],
-                      fontSize: '12px',
-                      fontFamily: 'Source Sans Pro',
-                      fontWeight: 'bold',
-                    },
-                    '& .MuiTablePagination-displayedRows': {
-                      color: colors.primary[200],
-                      fontSize: '12px',
-                      fontFamily: 'Source Sans Pro',
-                      fontWeight: 'bold',
-                    },
-                    '& .MuiTablePagination-select': {
-                      color: colors.primary[200],
-                      fontSize: '12px',
-                      fontFamily: 'Source Sans Pro',
-                      fontWeight: 'bold',
-                      '& .MuiSelect-select': {
-                        padding: '2px 24px 2px 8px',
-                      },
-                    },
-                    '& .MuiTablePagination-selectIcon': {
-                      color: colors.primary[200],
-                    },
-                    '& .MuiTablePagination-actions': {
-                      '& .MuiIconButton-root': {
-                        color: colors.primary[200],
-                      },
-                      '& .Mui-disabled': {
-                        color: colors.primary[200],
-                        opacity: 0.5,
-                      },
-                    },
-                    '& .MuiTablePagination-menu': {
-                      '& .MuiPaper-root': {
-                        backgroundColor: 'black !important',
-                        color: colors.primary[200],
-                        border: '1px solid white !important',
-                      },
-                      '& .MuiMenuItem-root': {
-                        color: colors.primary[200],
-                        fontSize: '12px',
-                        fontFamily: 'Source Sans Pro',
-                        '&:hover': {
-                          backgroundColor: '#333 !important',
-                        },
-                      },
-                    },
-                    '& .MuiInputBase-root': {
-                      color: colors.primary[200],
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: colors.primary[200],
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: colors.primary[200],
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: colors.primary[200],
-                      },
-                    },
-                  }}
-                />
+              <TablePagination
+                component="div"
+                rowsPerPageOptions={[25, 50, 75]}
+                count={totalRecords || dataArray.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                sx={{
+                  color: colors.primary[200],
+                  "& .MuiTablePagination-toolbar": {
+                    minHeight: 40,
+                    height: "auto",
+                  },
+                }}
+              />
             </Box>
+          </>
+        ) : historicalType === "Cell Details" ? (
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <CellType data={cellDataArray} />
           </Box>
-        ): historicalType === "Cell Details" ?(
-        <CellType data={cellDataArray}/>
-       ): historicalType === "Circle Wise" ?(
-        <CircleWise data={circleDataArray}/>
-       ): (
-        <CellAlarms data={cellDataArray}/>
-       ) }
-        </>
+        ) : historicalType === "Circle Wise" ? (
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <CircleWise data={circleDataArray} />
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+            <CellAlarms data={cellDataArray} />
+          </Box>
+        )
       ) : (
-        <Typography variant="body1" sx={{ marginTop: 2, textAlign: "center",color:colors.primary[200]}}>
+        <Typography
+          variant="body1"
+          sx={{ marginTop: 2, textAlign: "center", color: colors.primary[200] }}
+        >
           No data available
         </Typography>
       )}
-    </div>
-  );
-};
+    </Box>
+  </Box>
+);
+}
 
 export default Historical;
