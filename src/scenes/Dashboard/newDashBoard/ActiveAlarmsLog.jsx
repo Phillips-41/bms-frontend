@@ -42,9 +42,17 @@ export const ActiveAlarmsLog = ({ alarms = [] }) => {
     navigate('/issuetracking');
   };
 
-  const handleSiteClick = (alarm) => {
-    goToLiveMonitoring({ siteId: alarm.siteId, area: alarm.site });
-  };
+const handleSiteClick = (alarm) => {
+  goToLiveMonitoring({
+    siteId: alarm.siteId,
+    area: alarm.site,
+    serialNumber: alarm.serialNumber,
+    state: alarm.state,
+    zone: alarm.zone,
+    circle: alarm.circle,
+    division: alarm.division,
+  });
+};
 
   return (
     <Card

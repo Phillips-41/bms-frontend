@@ -33,7 +33,7 @@ import clear from '../../assets/assets/images/png/brush.png'
 import { Button } from '@mui/material';
 import { format, addDays, isAfter, isBefore, startOfDay, parse } from "date-fns";
 import { formatTimeStamp } from '../Analytics/Historical';
-const BASE_URL = "http://localhost:51270"; 
+const BASE_URL = "https://rbms.mahadiscom.in/mseb"; 
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {

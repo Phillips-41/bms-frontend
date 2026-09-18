@@ -4,22 +4,66 @@ import { AppContext } from '../../../services/AppContext';
 
 export const useSiteNavigation = () => {
   const navigate = useNavigate();
-  const { setSiteId, setArea, setSerialNumber, handleSearch } = useContext(AppContext);
+  const {
+    handleStateChange,
+    handleZoneChange,
+    handleCircleChange,
+    handleDivisionChange,
+    setArea,
+    setSiteId,
+    setSerialNumber,
+    setDeviceId,
+    handleSearch,
+  } = useContext(AppContext);
 
-  const goToLiveMonitoring = useCallback(async ({ siteId, area, serialNumber } = {}) => {
-    // Set ALL values first, then wait a tick for context to propagate
-    if (siteId != null) setSiteId?.(siteId);
-    if (area != null) setArea?.(area);
-    if (serialNumber != null) setSerialNumber?.(serialNumber);
+  const goToLiveMonitoring = useCallback(
+    async ({
+      siteId,
+      area,
+      serialNumber,
+      state,
+      zone,
+      circle,
+      division,
+    } = {}) => {
+      // 1) Update hierarchy so Header selects show the right values + options
+      if (state) await handleStateChange?.(state);
+      if (zone) await handleZoneChange?.(zone);
+      if (circle) await handleCircleChange?.(circle);
+      if (division) await handleDivisionChange?.(division);
 
-    // Wait for React to flush context updates before running search
-    await new Promise((r) => setTimeout(r, 0));
+      if (area != null) setArea?.(area);
 
-    const ok = await handleSearch?.();
-    if (ok !== false) {
-      navigate('/livemonitoring', { state: { from: '/' } });
-    }
-  }, [setSiteId, setArea, setSerialNumber, handleSearch, navigate]);
+      // Clear deviceId so manufacturer is not skipped if someone calls handleSearch() alone
+      setDeviceId?.("");
+
+      if (siteId != null) setSiteId?.(siteId);
+      if (serialNumber != null) setSerialNumber?.(serialNumber);
+
+      // 2) Search with explicit area (not stale closure) + always load manufacturer
+      const ok = await handleSearch?.({
+        area,
+        forceManufacturer: true,
+      });
+
+      // 3) Open live dashboard — Header already has filters set
+      if (ok !== 0 && ok !== false) {
+        navigate("/livemonitoring", { state: { from: "/" } });
+      }
+    },
+    [
+      handleStateChange,
+      handleZoneChange,
+      handleCircleChange,
+      handleDivisionChange,
+      setArea,
+      setSiteId,
+      setSerialNumber,
+      setDeviceId,
+      handleSearch,
+      navigate,
+    ]
+  );
 
   return { goToLiveMonitoring };
 };
@@ -189,6 +233,10 @@ export const getLatestActiveAlarms = (list = [], limit = 6) => {
         deviceKey,
         id: `${deviceKey}-${chosen.key}`,
         type: chosen.label,
+        state: item.state,
+        zone: item.zone,
+        circle: item.circle,
+        division: item.division,
         site:
           item.area ||
           item.siteLocationDTO?.area ||

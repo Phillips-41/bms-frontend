@@ -1,8 +1,8 @@
 import axios from "axios";
 import { getUsername } from "../utils/ProtectedRoutes";
 
-const BASE_URL = "http://localhost:51270"; 
-// const BASE_URL = "http://localhost:51270";
+const BASE_URL = "https://rbms.mahadiscom.in/mseb"; 
+// const BASE_URL = "https://rbms.mahadiscom.in/mseb";
 export const API_KEY = "AIzaSyCHaONrQ1KYNXbtSRFNNSWETwrQaJY_B0U"
 
 // Create an Axios instance with default configuration
@@ -65,21 +65,19 @@ export const fetchCommunicationStatus = async (marginMinutes) => {
     throw error;
   }
 };
-
-export const fetchLatestData = async () => {
-  try {
-    const response = await apiClient.get("/latest");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching communication status:", error);
-    throw error;
-  }
+export const fetchLatestData = async (options = {}) => {
+  const response = await apiClient.get("/latest", {
+    signal: options.signal,
+  });
+  return response.data;
 };
 
 
 export const fetchCommunicationDevices = async (marginMinutes) => {
   try {
-    const response = await apiClient.get("/communicationStatus");
+    const response = await apiClient.get("/communicationStatus", {
+    signal: options.signal,
+  });
     return response.data;
   } catch (error) {
     console.error("Error fetching communication status:", error);

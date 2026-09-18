@@ -752,42 +752,40 @@ const Dashboard = () => {
     }),
     [userAccess]
   );
+useEffect(() => {
+  const controller = new AbortController();
+  let mounted = true;
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let mounted = true;
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [response, dashboardResponse] = await Promise.all([
-          fetchLatestData({ signal: controller.signal }),
-          fetchDashboardData({ signal: controller.signal }),
-        ]);
-
-        if (!mounted) return;
-
-        const list = Array.isArray(response) ? response : [];
+  (async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [response, dashboardResponse] = await Promise.all([
+        fetchLatestData({ signal: controller.signal }),
+        fetchDashboardData({ signal: controller.signal }),
+      ]);
+      if (!mounted) return;
+      const list = Array.isArray(response) ? response : [];
         const comm = list.filter((i) => i.isNotCommunicating === false).length;
 
         setTotalData(list);
         setDashboardData(dashboardResponse || null);
         setCommunicationData({ communicating: comm, nonCommunicating: list.length - comm, device: list, });
-      } catch (err) {
-        if (err?.name === "AbortError") return;
-        console.error("Error fetching data:", err);
-        if (mounted) setError(err);
-      } finally {
-        if (mounted) setLoading(false);
+    } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError" || err?.code === "ERR_CANCELED") {
+        return;
       }
-    })();
+      if (mounted) setError(err);
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  })();
 
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, []);
+  return () => {
+    mounted = false;
+    controller.abort();
+  };
+}, []);
 
   return (
     <NewDashboard
@@ -804,6 +802,6 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-// http://localhost:51270
+// https://rbms.mahadiscom.in/mseb
 // http://192.168.1.51:51270
 // https://rbms.mahadiscom.in/mseb

@@ -15,6 +15,7 @@ import { tokens } from "../../../../theme";
 import "./Header.css";
 import clear from '../../../../assets/assets/images/png/brush.png';
 import { AppContext } from "../../../../services/AppContext";
+import { getUserAccess } from "../../../../utils/ProtectedRoutes";
 import {
   Dialog,
   DialogTitle,
@@ -65,14 +66,17 @@ const theme = useTheme();
     configMissingOpen, setConfigMissingOpen,status,
     handleSearch,setIsChecked,isChecked,setCircle,setState,Mdata = {},liveTime,setSerialNumberOptions,setSiteOptions,
     data,state,circle,stateOptions,circleOptions,siteOptions,handleCircleChange,handleStateChange,clearOptions,
-    zone,setZone,zoneOptions,handleZoneChange, area, areaOptions, handleAreaChange,divisionOptions,division,handleDivisionChange
+    zone,setZone,zoneOptions,handleZoneChange,setDivision, area, areaOptions, handleAreaChange,divisionOptions,division,handleDivisionChange
   } = useContext(AppContext);
 
   useEffect(()=>{
 return () => {
     setIsChecked(false);
+  
 }
   },[])
+
+
  
 const handleCheckboxChange = () => {
     setIsChecked(!isChecked);

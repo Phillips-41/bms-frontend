@@ -20,7 +20,7 @@ const LoginPage = () => {
   const { token, setToken, setUserRole, username, setUsername } = useContext(AppContext);
   const navigate = useNavigate();
 
-  const BASE_URL = "http://localhost:51270";
+  const BASE_URL = "https://rbms.mahadiscom.in/mseb";
 
   const fetchRoles = async () => {
     try {

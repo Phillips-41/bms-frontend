@@ -9,7 +9,7 @@ fetchHistoricalCellAlarms,
 fetchDivisionList,
 fetchCircleWiseData,fetchDivisionWiseData} from "./apiService";
 import { isEqual, set } from 'lodash';
-import { getUsername } from "../utils/ProtectedRoutes";
+import { getUserAccess } from "../utils/ProtectedRoutes";
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
@@ -91,6 +91,13 @@ const [configMissingOpen, setConfigMissingOpen] = useState(false);
       }
     };
     fetchOptions();
+    const userAccess = getUserAccess();
+    if(userAccess){
+      setState(userAccess.state.value || "");
+      setZone(userAccess.zone.value || "");
+      setCircle(userAccess.circle.value || "");
+      setDivision(userAccess.division.value || "");
+    }
   }, [token]); // Depend on token instead of isAuthenticated
 
 
@@ -112,90 +119,86 @@ const [configMissingOpen, setConfigMissingOpen] = useState(false);
     }
   };
 
-  const handleSearch = async () => {
-  if (!token || !area) return;
+const handleSearch = async (overrides = {}) => {
+  const searchArea = overrides.area ?? area;
+  const forceManufacturer = overrides.forceManufacturer === true;
+
+  if (!token || !searchArea) return 0;
 
   try {
-    const deviceResponse = await fetchDeviceDetails(area);
-    const { chargerMonitoringDTO, deviceDataDTO, packetDateTime, id ,status, siteId} = deviceResponse;
-  
-    // Skip if same device is already loaded
-   // if (id === deviceId) return;
-
-    // Get new manufacturer details
-    if (id !== deviceId) {
-  let manufacturerDetails = null;
-  try {
-    manufacturerDetails = await fetchManufacturerDetails(area);
-  } catch (mfgError) {
-    console.error("Manufacturer details error:", mfgError);
-    manufacturerDetails = null;
-  }
-
-  if (
-    manufacturerDetails == null ||
-    (typeof manufacturerDetails === "object" &&
-      Object.keys(manufacturerDetails).length === 0)
-  ) {
-    // No configuration for this area
-    setConfigMissingOpen(true);
-    setMdata({
-      ahCapacity: "",
-      vendorName: "",
-      location: "",
-      latitude: 0,
-      longitude: 0,
-      siteId: "",
-      serialNumber: "",
-      packetDateTime: "",
-      customer: "",
-      batterySerialNumber: "",
-      id: "",
-    });
-  } else {
-    setMdata((prev) => {
-      const newMdata = { ...prev, ...manufacturerDetails };
-      return isEqual(prev, newMdata) ? prev : newMdata;
-    });
-  }
-}
-
-    // ===== (2) Update data ONLY if changed =====
-    if (deviceDataDTO?.length > 0 ) {
-      setData(deviceDataDTO);
-    } else if (!deviceDataDTO) {
-      setData([]); // Clear if no data
+    const deviceResponse = await fetchDeviceDetails(searchArea);
+    if (!deviceResponse) {
+      setData([]);
+      setCharger(null);
+      return 0;
     }
 
-    // ===== (3) Update charger ONLY if changed =====
-    if (chargerMonitoringDTO) {
-      setCharger(chargerMonitoringDTO);
-    } else if (!chargerMonitoringDTO) {
-      setCharger(null); // Clear if no data
+    const {
+      chargerMonitoringDTO,
+      deviceDataDTO,
+      packetDateTime,
+      id,
+      status,
+      siteId: respSiteId,
+    } = deviceResponse;
+
+    // Header click: forceManufacturer is false → only when device changes
+    // Navigation: forceManufacturer true → always load config
+    if (forceManufacturer || id !== deviceId) {
+      let manufacturerDetails = null;
+      try {
+        manufacturerDetails = await fetchManufacturerDetails(searchArea);
+      } catch (e) {
+        console.error(e);
+      }
+
+      if (
+        manufacturerDetails == null ||
+        (typeof manufacturerDetails === "object" &&
+          Object.keys(manufacturerDetails).length === 0)
+      ) {
+        setConfigMissingOpen?.(true);
+        setMdata({
+          ahCapacity: "",
+          vendorName: "",
+          location: "",
+          latitude: 0,
+          longitude: 0,
+          siteId: "",
+          serialNumber: "",
+          packetDateTime: "",
+          customer: "",
+          batterySerialNumber: "",
+          id: "",
+        });
+      } else {
+        setMdata((prev) => {
+          const next = { ...prev, ...manufacturerDetails };
+          return isEqual(prev, next) ? prev : next;
+        });
+      }
     }
 
-    // ===== (4) Update liveTime ONLY if changed =====
+    if (deviceDataDTO?.length > 0) setData(deviceDataDTO);
+    else setData([]);
+
+    setCharger(chargerMonitoringDTO || null);
+
     if (packetDateTime) {
       setLiveTime(packetDateTime);
-      setStatus(status)
+      setStatus(status);
+    }
+    if (id) setDeviceId(id);
+    if (respSiteId) setSiteId(respSiteId);
+    if (deviceDataDTO?.length > 0) {
+      setSerialNumber(deviceDataDTO.map((d) => d.serialNumber));
     }
 
-    // ===== (5) Update deviceId ONLY if changed =====
-    if (id ) {
-      setDeviceId(id);
-    }
-
-    if(siteId){
-      setSiteId(siteId);
-    }
-
-    setSerialNumber(deviceDataDTO.map(data => data.serialNumber ));
-
-   return 1;
+    return 1;
   } catch (error) {
-    //clearOptions();
     console.error("Search error:", error);
     if (error.response?.status === 401) handleLogout();
+    return 0;
   }
 };
   const handleAnalytics = async ({type=""}) => {

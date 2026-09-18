@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:51270";
+const BASE_URL = "https://rbms.mahadiscom.in/mseb";
 
 /**
  * Mandatory dialog for NEW LDAP users to select their location hierarchy.
