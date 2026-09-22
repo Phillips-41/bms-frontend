@@ -46,13 +46,15 @@ export default Livemonitoring;
 
 function Dashboard() {
   const { data,Mdata = {} } = useContext(AppContext);
-    const device = data[0];
-  if (!device) return <div>
+    const isDevice = data[0]=== undefined ? true : false;
+  if (isDevice ) return(
+   <div>
      <Header />
-  </div>;
+     <AlarmsRail Mdata={Mdata} />
+  </div>);
 
-  const { description="", documentUrlsList=[] } = Mdata?.urls || {};
-  const { ahInForOneChargeCycle, ahOutForOneDischargeCycle } = device;
+  // const { description="", documentUrlsList=[] } = Mdata?.urls || {};
+  const { ahInForOneChargeCycle, ahOutForOneDischargeCycle } = data[0] || {};
   
   return (
    <Box
@@ -84,7 +86,7 @@ function Dashboard() {
     }}
   >
     <Header />
-    {!Mdata?.urls? 
+    {/* {!Mdata?.urls?  */}
     <>
       <HealthBar />
 
@@ -185,7 +187,22 @@ function Dashboard() {
         </Box>
       </Box>
     </>: 
-    <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#fff', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', width: '100%', boxSizing: 'border-box', }} > 
+   
+    
+  </Box>
+</Box>
+
+  );
+}
+
+
+
+function AlarmsRail({ Mdata }) {
+
+  if (!Mdata?.urls) return <></>;
+    const { description="", documentUrlsList=[] } = Mdata?.urls || {};
+return(
+   <div style={{ padding: '20px', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#fff', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', width: '100%', boxSizing: 'border-box', }} > 
     {/* Header */} <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0', }} >
        <div> 
         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1f2937', }} > Installation Details </h3>
@@ -213,13 +230,8 @@ function Dashboard() {
                   fontSize: '14px', }} > No files attached </div> )} 
                   </div>
                    </div>
-    }
-  </Box>
-</Box>
-
-  );
+)
 }
-
 
 
 

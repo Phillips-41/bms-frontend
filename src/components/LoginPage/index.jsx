@@ -6,31 +6,23 @@ import Watermark from "../../assets/images/watermark.jpeg";
 import { AppContext } from "../../services/AppContext";
 import Logo from "../../assets/images/png/vajra.png";
 import MahaLogo from "../../assets/images/png/maha.png";
-
 import LocationSetupDialog from "../LocationSetup/LocationSetupDialog";
 
+
 const LoginPage = () => {
-  const [role, setRole] = useState("");
-  const [roles, setRoles] = useState([]);
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const [validationMessages, setValidationMessages] = useState([]);
   
   const { token, setToken, setUserRole, username, setUsername } = useContext(AppContext);
   const navigate = useNavigate();
 
-  const BASE_URL = "https://rbms.mahadiscom.in/mseb";
+  // Location setup for new LDAP users
 
-  const fetchRoles = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/getListofLoginRoles`);
-      setRoles(response.data || []);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-      setValidationMessages(["Failed to fetch roles. Please try again later."]);
-    }
-  };
+
+  const BASE_URL = "https://rbms.mahadiscom.in/mseb";
 
   // Location setup for new LDAP users
   const [showLocationSetup, setShowLocationSetup] = useState(false);
@@ -67,7 +59,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitted(true);
+
 
     const messages = [];
     if (!username) messages.push("Please enter the username.");
@@ -258,7 +250,8 @@ const LoginPage = () => {
     },
   };
 
-  if (token) return <Navigate to="/" />;
+  // If already logged in and not in location-setup flow, redirect
+  if (token && !showLocationSetup) return <Navigate to="/" />;
 
   return (
     <div>

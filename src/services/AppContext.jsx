@@ -1,8 +1,7 @@
-import React, { createContext, useState, useEffect } from "react";
-import { fetchAllSiteIds,fetchStatesDetails, fetchDeviceDetails,fetchMapByState,fetchMapByCircle, fetchManufacturerDetails,  fetchHistoricalBatteryandChargerdetails,  fetchDaywiseBatteryandChargerdetails,
+import  { createContext, useState, useEffect } from "react";
+import { fetchStatesDetails, fetchDeviceDetails,fetchMapByState,fetchMapByCircle, fetchManufacturerDetails,  fetchHistoricalBatteryandChargerdetails,  fetchDaywiseBatteryandChargerdetails,
   fetchAlarmsBatteryandChargerdetails,fetchHistoricalCelldetails, 
   fetchCircleNames,
-  fetchIdsByCircle,
   fetchAreaList,
   fetchZoneNames,
 fetchHistoricalCellAlarms,
@@ -11,7 +10,7 @@ fetchCircleWiseData,fetchDivisionWiseData} from "./apiService";
 import { isEqual, set } from 'lodash';
 import { getUserAccess } from "../utils/ProtectedRoutes";
 export const AppContext = createContext();
-
+//There are many states and functions in this context, which are used across the application for managing site details, device data, analytics, and user access. The context provides a centralized state management solution for the app.
 export const AppProvider = ({ children }) => {
   const [siteOptions, setSiteOptions] = useState([]);
   const [siteIdOptions, setSiteIdOptions] = useState([]);
@@ -93,10 +92,10 @@ const [configMissingOpen, setConfigMissingOpen] = useState(false);
     fetchOptions();
     const userAccess = getUserAccess();
     if(userAccess){
-      setState(userAccess.state.value || "");
-      setZone(userAccess.zone.value || "");
-      setCircle(userAccess.circle.value || "");
-      setDivision(userAccess.division.value || "");
+      handleStateChange(userAccess.state.value || "");
+      handleZoneChange(userAccess.zone.value || "");
+      handleCircleChange(userAccess.circle.value || "");
+      handleDivisionChange(userAccess.division.value || "");
     }
   }, [token]); // Depend on token instead of isAuthenticated
 
@@ -126,29 +125,27 @@ const handleSearch = async (overrides = {}) => {
   if (!token || !searchArea) return 0;
 
   try {
-    const deviceResponse = await fetchDeviceDetails(searchArea);
-    if (!deviceResponse) {
-      setData([]);
-      setCharger(null);
-      return 0;
-    }
 
+    const deviceResponse = await fetchDeviceDetails(area);
+   
+  
     const {
-      chargerMonitoringDTO,
-      deviceDataDTO,
-      packetDateTime,
-      id,
-      status,
-      siteId: respSiteId,
-    } = deviceResponse;
-
+      chargerMonitoringDTO=[],
+      deviceDataDTO=[],
+      packetDateTime="",
+      id="",
+      status="",
+      siteId: respSiteId="",
+    } = deviceResponse || {};
+    const isDeviceResponseEmpty = !deviceResponse || !id;
     // Header click: forceManufacturer is false → only when device changes
     // Navigation: forceManufacturer true → always load config
-    if (forceManufacturer || id !== deviceId) {
+    if (forceManufacturer || id !== deviceId || isDeviceResponseEmpty) {
       let manufacturerDetails = null;
       try {
         manufacturerDetails = await fetchManufacturerDetails(searchArea);
       } catch (e) {
+        setConfigMissingOpen?.(true);
         console.error(e);
       }
 
@@ -157,7 +154,7 @@ const handleSearch = async (overrides = {}) => {
         (typeof manufacturerDetails === "object" &&
           Object.keys(manufacturerDetails).length === 0)
       ) {
-        setConfigMissingOpen?.(true);
+       // setConfigMissingOpen?.(true);
         setMdata({
           ahCapacity: "",
           vendorName: "",
@@ -329,6 +326,7 @@ const handleSearch = async (overrides = {}) => {
 
   const handleStateChange = async (newValue) => {
     const value = getSelectValue(newValue);
+    if (!value) return;
     setState(value);
     // setZone('');
     // setCircle('');
@@ -344,6 +342,7 @@ const handleSearch = async (overrides = {}) => {
   };
   const handleZoneChange = async (newValue) => {
     const value = getSelectValue(newValue);
+    if (!value) return;
     setZone(value);
         setDeviceId('');
     // setCircleOptions([]);
@@ -360,6 +359,7 @@ const handleSearch = async (overrides = {}) => {
   };
   const handleCircleChange = async (newValue) => {
     const value = getSelectValue(newValue);
+    if (!value) return;
     setCircle(value);
     setDeviceId('');
     // setDivision('');
@@ -379,6 +379,7 @@ const handleSearch = async (overrides = {}) => {
 
   const handleDivisionChange = async (newValue) => {
     const value = getSelectValue(newValue);
+    if (!value) return;
     setDivision(value);
     setDeviceId('');
     setSiteOptions([]);
@@ -394,6 +395,7 @@ const handleSearch = async (overrides = {}) => {
   };
 
   const handleAreaChange = (newValue) => {
+    if (!newValue) return;
     setSiteId('');
     setDeviceId('');
     setSerialNumber('');

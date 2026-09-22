@@ -1,0 +1,38 @@
+pipeline {
+    agent { label 'windows-host' } // Runs directly on your Windows machine via SSH
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                // This pulls your private repo code into C:\Jenkins_Agent\workspace
+                checkout scm
+            }
+        }
+
+        stage('Install & Build React') {
+            steps {
+                // Runs standard node build commands natively on Windows
+                bat 'npm install'
+                bat 'npm run build'
+            }
+        }
+
+        stage('Deploy to IIS') {
+            steps {
+                // This powershell block safely cleans and copies your build files to your live IIS site folder
+                powershell '''
+                     $SourcePath = ".\\dist\\*"
+                    $DestinationPath = "D:\APPLICATIONS\JAVA\CombinationBatteryChargerMonitoring\WEB\com" # <-- CHANGE THIS to your real IIS path
+
+                    # Ensure target directory exists
+                    if (!(Test-Path $DestinationPath)) {
+                        New-Item -ItemType Directory -Force -Path $DestinationPath
+                    }
+
+                    # Copy new build files, overwriting old ones
+                    Copy-Item -Path $SourcePath -Destination $DestinationPath -Recurse -Force
+                '''
+            }
+        }
+    }
+}
