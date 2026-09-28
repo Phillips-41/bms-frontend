@@ -1,0 +1,51 @@
+/* AnalyticsSection */
+.as-card {
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.as-content {
+  padding: 12px 14px !important;
+}
+
+.as-content:last-child {
+  padding-bottom: 12px !important;
+}
+
+.as-title {
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 4px !important;
+}
+
+.as-caption {
+  font-size: 0.68rem !important;
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 899px) {
+  .as-content {
+    padding: 10px 12px !important;
+  }
+  .as-title {
+    font-size: 0.85rem !important;
+  }
+  .as-caption {
+    font-size: 0.65rem !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .as-content {
+    padding: 10px !important;
+  }
+  .as-title {
+    font-size: 0.82rem !important;
+  }
+  .as-caption {
+    font-size: 0.62rem !important;
+  }
+}

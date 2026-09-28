@@ -1,0 +1,148 @@
+/* ActiveAlarmsLog */
+.aal-card {
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.aal-content {
+  padding: 8px !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.aal-content:last-child {
+  padding-bottom: 8px !important;
+}
+
+.aal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.aal-title {
+  font-weight: 700 !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.aal-view-btn {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  font-size: 0.58rem !important;
+  min-width: auto !important;
+  padding: 2px 6px !important;
+  border-color: #d32f2f !important;
+  color: #d32f2f !important;
+}
+
+.aal-table .MuiTableCell-root {
+  padding: 3px 4px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.aal-th {
+  font-weight: 700 !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.aal-td-alarm {
+  font-weight: 700 !important;
+  font-size: 0.65rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.aal-td-site {
+  color: #1976d2 !important;
+  cursor: pointer;
+  font-weight: 600 !important;
+  font-size: 0.62rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100px;
+}
+
+.aal-td-site:hover {
+  text-decoration: underline;
+  color: #1565c0 !important;
+}
+
+.aal-td-time {
+  font-weight: 500 !important;
+  font-size: 0.62rem !important;
+  font-family: monospace !important;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+.aal-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  gap: 4px;
+  opacity: 0.7;
+}
+
+.aal-empty-title {
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+}
+
+.aal-empty-sub {
+  font-size: 0.62rem !important;
+  opacity: 0.7;
+}
+
+.aal-more {
+  text-align: center;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 0.52rem !important;
+  opacity: 0.65;
+}
+
+@media (max-width: 599px) {
+  .aal-content {
+    padding: 8px !important;
+  }
+  .aal-title {
+    font-size: 0.68rem !important;
+  }
+  .aal-th {
+    font-size: 0.58rem !important;
+  }
+  .aal-td-alarm {
+    font-size: 0.62rem !important;
+  }
+  .aal-td-site {
+    font-size: 0.6rem !important;
+  }
+  .aal-td-time {
+    font-size: 0.58rem !important;
+  }
+}
