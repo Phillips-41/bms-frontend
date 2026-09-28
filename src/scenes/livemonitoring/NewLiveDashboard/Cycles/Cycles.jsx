@@ -48,12 +48,12 @@ export function Cycles() {
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr" },
-          gap: { xs: "12px", sm: "8px", md: "8px" },
+          gap: { xs: "12px", sm: "6px", md: "8px" },
           minHeight: 0,
           flex: 1,
           overflow: { xs: "visible", sm: "hidden" },
           "& > div + div": {
-            pl: { xs: 0, sm: "8px", md: "8px" },
+            pl: { xs: 0, sm: "6px", md: "8px" },
             pt: { xs: "8px", sm: 0, md: 0 },
             borderLeft: {
               xs: "none",
@@ -67,22 +67,22 @@ export function Cycles() {
             },
           },
           "& h3": {
-            m: { xs: "0 0 6px", sm: "0 0 4px", md: "0 0 4px" },
+            m: { xs: "0 0 6px", sm: "0 0 2px", md: "0 0 4px" },
             color: "var(--primary)",
-            fontSize: { xs: "12px", sm: "11px", md: "10px" },
+            fontSize: { xs: "12px", sm: "9px", md: "10px" },
             letterSpacing: ".06em",
             textTransform: "uppercase",
           },
           "& p": {
             display: "flex",
             justifyContent: "space-between",
-            m: { xs: "6px 0", sm: "4px 0", md: "4px 0" },
+            m: { xs: "6px 0", sm: "2px 0", md: "4px 0" },
             color: "var(--muted-foreground)",
-            fontSize: { xs: "12px", sm: "11px", md: "10px" },
+            fontSize: { xs: "12px", sm: "10px", md: "10px" },
           },
           "& b": {
             color: "var(--foreground)",
-            fontSize: { xs: "14px", sm: "13px", md: "12px" },
+            fontSize: { xs: "14px", sm: "11px", md: "12px" },
             fontVariantNumeric: "tabular-nums",
           },
         }}

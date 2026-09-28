@@ -1,4 +1,4 @@
-/* Compact SOC — reduced size so the top row stays short. */
+/* Compact SOC — tablet stays short. */
 .soc-value {
   font-family: var(--font-display);
   font-size: 22px;
@@ -31,21 +31,21 @@
   color: var(--foreground);
 }
 
-/* tablet */
+/* tablet — tighter */
 @media (max-width: 899px) {
   .soc-value {
-    font-size: 24px;
+    font-size: 18px;
   }
   .soc-value span {
-    font-size: 13px;
+    font-size: 11px;
   }
   .progress-track {
-    height: 7px;
-    margin-top: 8px;
+    height: 5px;
+    margin-top: 4px;
   }
   .soc-footer {
-    margin-top: 6px;
-    font-size: 11px;
+    margin-top: 3px;
+    font-size: 9px;
   }
 }
 

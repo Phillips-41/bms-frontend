@@ -15,9 +15,9 @@ export function BarChart({ title, bars }) {
           flex: 1,
           alignItems: "flex-end",
           justifyContent: "space-around",
-          gap: { xs: "12px", sm: "8px", md: "8px" },
-          px: { xs: "4%", sm: "6%", md: "6%" },
-          pt: { xs: "10px", sm: "6px", md: "6px" },
+          gap: { xs: "12px", sm: "6px", md: "8px" },
+          px: { xs: "4%", sm: "4%", md: "6%" },
+          pt: { xs: "10px", sm: "2px", md: "6px" },
           borderBottom: "1px solid var(--border)",
           overflow: { xs: "visible", sm: "hidden" },
         }}
@@ -25,7 +25,7 @@ export function BarChart({ title, bars }) {
         <Box
           sx={{
             position: "absolute",
-            inset: { xs: "10px 0 16px", sm: "6px 0 12px", md: "6px 0 12px" },
+            inset: { xs: "10px 0 16px", sm: "2px 0 10px", md: "6px 0 12px" },
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -53,18 +53,18 @@ export function BarChart({ title, bars }) {
               flexDirection: "column",
               justifyContent: "flex-end",
               "& b": {
-                mt: { xs: "4px", sm: "3px", md: "3px" },
+                mt: { xs: "4px", sm: "1px", md: "3px" },
                 color: "var(--muted-foreground)",
-                fontSize: { xs: "12px", sm: "11px", md: "10px" },
+                fontSize: { xs: "12px", sm: "9px", md: "10px" },
               },
             }}
           >
             <Box
               component="span"
               sx={{
-                mb: { xs: "4px", sm: "3px", md: "3px" },
+                mb: { xs: "4px", sm: "1px", md: "3px" },
                 color: "var(--foreground)",
-                fontSize: { xs: "12px", sm: "11px", md: "10px" },
+                fontSize: { xs: "12px", sm: "9px", md: "10px" },
                 fontWeight: 700,
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -78,7 +78,7 @@ export function BarChart({ title, bars }) {
                   position: "relative",
                   width: {
                     xs: "min(56px, 80%)",
-                    sm: "min(48px, 75%)",
+                    sm: "min(40px, 70%)",
                     md: "min(44px, 75%)",
                   },
                   minHeight: "4px",

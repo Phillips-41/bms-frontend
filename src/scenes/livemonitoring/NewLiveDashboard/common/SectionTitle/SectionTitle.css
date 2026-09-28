@@ -1,4 +1,4 @@
-/* Panel heading: accent bar + uppercase title + optional right-hand aside. */
+/* Panel heading */
 .section-heading {
   display: flex;
   min-width: 0;
@@ -54,25 +54,26 @@
   font-weight: 800;
 }
 
-/* tablet */
+/* tablet — tighter headings */
 @media (max-width: 899px) {
   .section-heading {
-    margin-bottom: 8px;
-    gap: 6px;
+    margin-bottom: 3px;
+    gap: 4px;
   }
   .section-heading h2 {
-    font-size: 11px;
+    font-size: 9px;
   }
   .accent-line {
-    height: 14px;
+    height: 11px;
+    width: 2px;
   }
   .subtle-label {
-    font-size: 10px;
+    font-size: 8px;
   }
   .alarm-count {
-    width: 20px;
-    height: 20px;
-    font-size: 9px;
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
   }
 }
 

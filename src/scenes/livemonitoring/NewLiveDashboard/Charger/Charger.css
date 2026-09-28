@@ -1,4 +1,4 @@
-/* Charger — readable values, fills its middle-width row. */
+/* Charger — tablet compact. */
 .charger-card .section-heading {
   margin-bottom: 4px;
 }
@@ -61,28 +61,29 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* tablet */
+/* tablet — tighter */
 @media (max-width: 899px) {
   .charger-card .section-heading {
-    margin-bottom: 6px;
+    margin-bottom: 2px;
   }
   .charger-state {
-    font-size: 11px;
-    padding: 4px 8px;
+    font-size: 9px;
+    padding: 2px 5px;
+    gap: 4px;
   }
   .charger-grid > div {
-    padding: 4px 8px;
+    padding: 1px 6px;
   }
   .charger-grid span {
-    font-size: 10px;
+    font-size: 8px;
   }
   .charger-grid strong {
-    font-size: 14px;
-    margin-top: 3px;
+    font-size: 12px;
+    margin-top: 1px;
   }
 }
 
-/* mobile — 2x2 grid for readability */
+/* mobile — 2x2 */
 @media (max-width: 599px) {
   .charger-card .section-heading {
     margin-bottom: 8px;

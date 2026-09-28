@@ -76,32 +76,32 @@
   gap: 5px;
 }
 
-/* tablet */
+/* tablet — shorter strip */
 @media (max-width: 899px) {
   .health-bar {
-    min-height: 36px;
+    min-height: 28px;
     overflow-x: auto;
   }
   .health-lead {
-    min-width: 150px;
-    padding: 6px 10px;
-    gap: 8px;
+    min-width: 130px;
+    padding: 3px 8px;
+    gap: 6px;
   }
   .health-lead strong {
-    font-size: 11px;
-  }
-  .health-lead div span {
     font-size: 10px;
   }
-  .health-item {
-    min-width: 100px;
-    padding: 4px 10px;
-  }
-  .health-item span {
+  .health-lead div span {
     font-size: 9px;
   }
+  .health-item {
+    min-width: 90px;
+    padding: 2px 8px;
+  }
+  .health-item span {
+    font-size: 8px;
+  }
   .health-item strong {
-    font-size: 12px;
+    font-size: 11px;
   }
   .health-links {
     display: none;

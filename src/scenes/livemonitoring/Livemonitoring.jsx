@@ -37,7 +37,6 @@ const Livemonitoring = () => {
         height: "100%",
         minHeight: 0,
         width: "100%",
-        // xs only: allow vertical scroll; sm+ lock to viewport
         overflow: { xs: "auto", sm: "hidden" },
         display: "flex",
         flexDirection: "column",
@@ -69,8 +68,6 @@ function Dashboard() {
     <Box
       component="main"
       sx={{
-        // xs: content height follows content (scroll parent)
-        // sm+: fill parent, never grow past viewport
         height: { xs: "auto", sm: "100%" },
         minHeight: { xs: "100%", sm: 0 },
         width: "100%",
@@ -79,26 +76,18 @@ function Dashboard() {
         flexDirection: "column",
         background: "var(--background)",
         boxSizing: "border-box",
-        p: { xs: "4px", sm: "5px", md: "5px", lg: "6px" },
-        gap: { xs: "4px", sm: "5px", md: "5px", lg: "6px" },
+        p: { xs: "4px", sm: "4px", md: "5px", lg: "6px" },
+        gap: { xs: "4px", sm: "4px", md: "5px", lg: "6px" },
       }}
     >
-      {/* Header — natural height, never shrinks */}
       <Box sx={{ flex: "0 0 auto", minHeight: 0 }}>
         <Header />
       </Box>
 
-      {/* HealthBar — natural height, never shrinks */}
       <Box sx={{ flex: "0 0 auto", minHeight: 0 }}>
         <HealthBar />
       </Box>
 
-      {/*
-       * Main grid
-       * xs : 1 column  (cells + alarms stacked inside centre)
-       * sm : 2 columns (centre | alarms) — tablet, no scroll
-       * md+: 3 columns (cells | centre | alarms) — desktop, unchanged
-       */}
       <Box
         sx={{
           flex: { xs: "0 0 auto", sm: "1 1 auto" },
@@ -106,16 +95,16 @@ function Dashboard() {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            sm: "minmax(0, 1fr) 160px",
+            sm: "minmax(0, 1fr) 140px",
             md: "200px minmax(0, 1fr) 168px",
             lg: "220px minmax(0, 1fr) 180px",
             xl: "240px minmax(0, 1fr) 200px",
           },
-          gap: { xs: "4px", sm: "5px", md: "5px", lg: "10px" },
+          gap: { xs: "4px", sm: "4px", md: "5px", lg: "10px" },
           overflow: { xs: "visible", sm: "hidden" },
         }}
       >
-        {/* left: CellsPanel — only from md up (desktop) */}
+        {/* left: CellsPanel — desktop only */}
         <Box
           sx={{
             minHeight: 0,
@@ -137,20 +126,18 @@ function Dashboard() {
             overflow: { xs: "visible", sm: "hidden" },
             gridTemplateColumns: {
               xs: "1fr",
-              // tablet: 2-col so pairs sit side-by-side and fit without scroll
               sm: "repeat(2, minmax(0, 1fr))",
-              // desktop: 12-col system (original)
               md: "repeat(12, minmax(0, 1fr))",
             },
+            /* tablet: shrink upper rows, give cells ~2.6fr so they stay readable */
             gridTemplateRows: {
               xs: "none",
-              sm: "minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.8fr)",
+              sm: "minmax(0, 0.7fr) minmax(0, 0.55fr) minmax(0, 1.05fr) minmax(0, 1.0fr) minmax(0, 2.6fr)",
               md: "1.1fr 0.9fr 1.6fr 1.6fr",
             },
-            gap: { xs: "4px", sm: "5px", md: "5px", lg: "8px" },
+            gap: { xs: "4px", sm: "4px", md: "5px", lg: "8px" },
           }}
         >
-          {/* LiveBattery */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "1", md: "span 6" },
@@ -161,7 +148,6 @@ function Dashboard() {
             <LiveBattery />
           </Box>
 
-          {/* StateOfCharge */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "2", md: "span 6" },
@@ -172,7 +158,6 @@ function Dashboard() {
             <StateOfCharge />
           </Box>
 
-          {/* Charger — full width */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "1 / -1", md: "1 / -1" },
@@ -183,7 +168,6 @@ function Dashboard() {
             <Charger />
           </Box>
 
-          {/* Cumulative */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "1", md: "span 6" },
@@ -194,7 +178,6 @@ function Dashboard() {
             <Cumulative />
           </Box>
 
-          {/* Cycles */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "2", md: "span 6" },
@@ -205,7 +188,6 @@ function Dashboard() {
             <Cycles />
           </Box>
 
-          {/* Bar charts */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "1", md: "span 6" },
@@ -237,11 +219,7 @@ function Dashboard() {
             />
           </Box>
 
-          {/*
-           * CellsPanel — mobile (xs) only, stacked under charts.
-           * On sm tablet it sits in its own column below charts (full width of centre).
-           * Hidden from md up (desktop uses left rail).
-           */}
+          {/* CellsPanel — xs/sm only (bottom of centre). md+ uses left rail. */}
           <Box
             sx={{
               gridColumn: { xs: "1", sm: "1 / -1" },
@@ -255,14 +233,7 @@ function Dashboard() {
           </Box>
         </Box>
 
-        {/*
-         * right: Alarms
-         * xs  : hidden here (shown inside centre stack via mobile block above — wait, Alarms is separate)
-         * sm+ : visible as right column
-         * md+ : visible as right column (desktop)
-         *
-         * On xs we still need Alarms somewhere — render a mobile-only copy below.
-         */}
+        {/* right: Alarms — sm+ */}
         <Box
           sx={{
             minHeight: 0,
@@ -274,7 +245,7 @@ function Dashboard() {
           <Alarms items={mockAlarms} />
         </Box>
 
-        {/* Mobile-only Alarms (xs) — sits after the centre grid as full-width row */}
+        {/* Mobile-only Alarms */}
         <Box
           sx={{
             gridColumn: "1",
