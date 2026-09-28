@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import CloseIcon from '@mui/icons-material/Close';
-import { useTheme } from '@mui/material/styles';
+import { Box, useTheme } from '@mui/material';
 import { AppContext } from '../../services/AppContext';
 import { tokens } from '../../theme';
 import green from '../../assets/images/png/marker-icon-2x-green.png';
@@ -31,11 +31,9 @@ const getLeafletIcon = (statusType) =>
 const DEFAULT_CENTER = [19.0, 74.0];
 const DEFAULT_ZOOM = 7;
 
-// Fit map to markers + fix size after layout changes
 const MapEffects = ({ markers }) => {
   const map = useMap();
 
-  // Fit bounds whenever markers change
   useEffect(() => {
     if (!map || !markers?.length) return;
 
@@ -52,7 +50,6 @@ const MapEffects = ({ markers }) => {
     }
   }, [map, markers]);
 
-  // ResizeObserver – when parent grid cell changes size
   useEffect(() => {
     if (!map) return;
     const container = map.getContainer();
@@ -74,11 +71,11 @@ const MapComponent = ({ mapMarkers = [] }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  // Only keep markers with valid coordinates
   const markers = useMemo(() => {
     if (!Array.isArray(mapMarkers)) return [];
     return mapMarkers.filter(
-      (m) => m &&
+      (m) =>
+        m &&
         Number.isFinite(parseFloat(m.lat)) &&
         Number.isFinite(parseFloat(m.lng))
     );
@@ -101,14 +98,14 @@ const MapComponent = ({ mapMarkers = [] }) => {
         .leaflet-container { width: 100%; height: 100%; z-index: 0; }
       `}</style>
 
-      <div
-        style={{
+      <Box
+        sx={{
           width: '100%',
           height: '100%',
-          minHeight: 200,
+          minHeight: { xs: 240, sm: 280, md: 320, lg: 200 },
           borderColor: colors.primary[300],
           overflow: 'hidden',
-          borderRadius: 8,
+          borderRadius: { xs: 1.5, sm: 2, md: 2 },
         }}
       >
         <MapContainer
@@ -142,74 +139,75 @@ const MapComponent = ({ mapMarkers = [] }) => {
                     autoClose={false}
                     closeOnClick={false}
                   >
-                    <div style={infoWindowStyle}>
+                    <Box
+                      sx={{
+                        fontSize: { xs: '12px', sm: '13px', md: '14px' },
+                        fontFamily: 'Arial, sans-serif',
+                        color: '#333',
+                        minWidth: { xs: 130, sm: 150 },
+                        p: '1px',
+                        m: 0,
+                        position: 'relative',
+                      }}
+                    >
                       <CloseIcon
-                        style={closeButtonStyle}
+                        sx={{
+                          position: 'absolute',
+                          top: 2,
+                          right: 4,
+                          cursor: 'pointer',
+                          fontSize: { xs: 14, sm: 16 },
+                          zIndex: 1000,
+                        }}
                         onClick={() => setSelectedMarker(null)}
                       />
-                      <div style={titleStyle}>{marker.name}</div>
-                      <div style={contentStyle}>
-                        <div style={{ display: 'flex' }}>
+                      <Box
+                        sx={{
+                          fontSize: { xs: '13px', sm: '14px', md: '15px' },
+                          fontWeight: 'bold',
+                          mb: 1,
+                          color: '#2c3e50',
+                          backgroundColor: '#FFC107',
+                          textAlign: 'center',
+                          p: { xs: 0.5, sm: 0.75 },
+                          borderRadius: 1,
+                        }}
+                      >
+                        {marker.name}
+                      </Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          fontSize: { xs: 9, sm: 10 },
+                          flexDirection: 'column',
+                          gap: 0.75,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex' }}>
                           <strong style={{ width: 85 }}>🔹Sub-Station ID</strong>
                           <strong>:</strong>
                           <span style={{ color: '#000f89', fontWeight: 'bold', marginLeft: 4 }}>
                             {marker.siteId}
                           </span>
-                        </div>
-                        <div style={{ display: 'flex' }}>
+                        </Box>
+                        <Box sx={{ display: 'flex' }}>
                           <strong style={{ width: 85 }}>🔹SerialNumber</strong>
                           <strong>:</strong>
                           <span style={{ color: '#000f89', fontWeight: 'bold', marginLeft: 4 }}>
                             {getSelectedSerialNumber(marker.serialNumber)}
                           </span>
-                        </div>
-                      </div>
-                    </div>
+                        </Box>
+                      </Box>
+                    </Box>
                   </Popup>
                 )}
               </React.Fragment>
             );
           })}
         </MapContainer>
-      </div>
+      </Box>
     </>
   );
 };
 
 export default MapComponent;
-
-const infoWindowStyle = {
-  fontSize: '14px',
-  fontFamily: 'Arial, sans-serif',
-  color: '#333',
-  minWidth: '150px',
-  padding: '1px',
-  margin: 0,
-};
-
-const closeButtonStyle = {
-  position: 'absolute',
-  top: 2,
-  right: 4,
-  cursor: 'pointer',
-  fontSize: 16,
-  zIndex: 1000,
-};
-
-const titleStyle = {
-  fontSize: '15px',
-  fontWeight: 'bold',
-  marginBottom: 8,
-  color: '#2c3e50',
-  backgroundColor: '#FFC107',
-  textAlign: 'center',
-  padding: 5,
-  borderRadius: 4,
-};
-
-const contentStyle = {
-  display: 'flex',
-  fontSize: 10,
-  flexDirection: 'column',
-  gap: 5,
-};

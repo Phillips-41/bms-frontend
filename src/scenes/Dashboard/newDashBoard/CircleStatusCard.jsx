@@ -13,13 +13,13 @@ const TABLE_CELL_STYLE = {
   color: 'black',
   fontWeight: 'bold',
   background: 'linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))',
-  padding: '3px',
-  minWidth: '150px',
+  padding: { xs: '4px 6px', sm: '3px 4px', md: '3px' },
+  minWidth: { xs: 100, sm: 120, md: 150 },
   whiteSpace: 'nowrap',
   textAlign: 'center',
+  fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
 };
 
-// statusType from backend: 0 = non-communicating (red), 1 = communicating (green)
 const STATUS_TYPE = {
   NON_COMMUNICATING: 1,
   COMMUNICATING: 0,
@@ -36,22 +36,17 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
 
   const { goToLiveMonitoring } = useSiteNavigation();
 
-  // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogRows, setDialogRows] = useState([]);
-
-  // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Safe array of markers
   const markers = useMemo(
     () => (Array.isArray(mapMarkers) ? mapMarkers : []),
     [mapMarkers]
   );
 
-  // Build rows for a given statusType
   const getRowsForStatus = useCallback(
     (statusType) => {
       return markers
@@ -63,7 +58,7 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
           serialNumber: m.serialNumber,
           zone: m.zone || '--',
           circle: m.circle || '--',
-          subDivision: m.divison || m.division || '--', 
+          subDivision: m.divison || m.division || '--',
           state: m.state,
           statusType: m.statusType,
           _raw: m,
@@ -74,7 +69,6 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
 
   const handleSliceClick = useCallback(
     (entry) => {
-      // entry.name = "Communicating" | "Non-Communicating"
       const isCommunicating = entry?.name === 'Communicating';
       const statusType = isCommunicating
         ? STATUS_TYPE.COMMUNICATING
@@ -145,13 +139,23 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
           width: '100%',
           bgcolor: 'background.paper',
           borderColor: 'divider',
-          borderRadius: 2,
+          borderRadius: { xs: 1.5, sm: 2, md: 2 },
         }}
       >
-        <CardContent sx={{ p: { lg: 1.5, xl: 2 }, '&:last-child': { pb: { lg: 1 } } }}>
+        <CardContent
+          sx={{
+            p: { xs: 1.25, sm: 1.5, md: 1.5, lg: 1.5, xl: 2 },
+            '&:last-child': { pb: { xs: 1.25, sm: 1.5, lg: 1 } },
+          }}
+        >
           <Typography
             variant="h6"
-            sx={{ color: 'text.primary', fontWeight: 700, mb: { lg: 1, xl: 1.5 } }}
+            sx={{
+              color: 'text.primary',
+              fontWeight: 700,
+              mb: { xs: 1, sm: 1.25, md: 1, lg: 1, xl: 1.5 },
+              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem', lg: '1.1rem' },
+            }}
           >
             STATUS
           </Typography>
@@ -161,15 +165,29 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: { lg: 3, xl: 2 },
+              mb: { xs: 1.5, sm: 2, md: 2, lg: 3, xl: 2 },
+              gap: { xs: 1, sm: 1.5 },
             }}
           >
-            <Box>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
+                }}
+              >
                 Total Monitored Sites
               </Typography>
 
-              <Typography variant="h3" sx={{ color: '#2ecc71', fontWeight: 700 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  color: '#2ecc71',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem', lg: '3rem' },
+                }}
+              >
                 {totalMonitoredSites}
               </Typography>
 
@@ -179,7 +197,7 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                   onClick={() => handleSliceClick({ name: 'Communicating' })}
                   sx={{
                     color: '#2ecc71',
-                    fontSize: '1rem',
+                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
                     fontWeight: 700,
                     cursor: 'pointer',
                     '&:hover': { textDecoration: 'underline' },
@@ -190,7 +208,11 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
 
                 <Typography
                   variant="caption"
-                  sx={{ color: 'text.secondary', fontSize: '1rem', fontWeight: 500 }}
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                    fontWeight: 500,
+                  }}
                 >
                   /
                 </Typography>
@@ -200,7 +222,7 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                   onClick={() => handleSliceClick({ name: 'Non-Communicating' })}
                   sx={{
                     color: '#ff4d4d',
-                    fontSize: '1rem',
+                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
                     fontWeight: 700,
                     cursor: 'pointer',
                     '&:hover': { textDecoration: 'underline' },
@@ -211,8 +233,14 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
               </Box>
             </Box>
 
-            {/* Pie Chart */}
-            <Box sx={{ width: 80, height: 80, position: 'relative' }}>
+            <Box
+              sx={{
+                width: { xs: 70, sm: 75, md: 80 },
+                height: { xs: 70, sm: 75, md: 80 },
+                position: 'relative',
+                flexShrink: 0,
+              }}
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -238,7 +266,6 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                 </PieChart>
               </ResponsiveContainer>
 
-              {/* Center text */}
               <Typography
                 variant="caption"
                 sx={{
@@ -247,7 +274,7 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
                   fontWeight: 700,
-                  fontSize: '0.8rem',
+                  fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                   color: 'text.primary',
                   whiteSpace: 'nowrap',
                   pointerEvents: 'none',
@@ -258,33 +285,58 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
             </Box>
           </Box>
 
-          {/* Active Alarms */}
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: { lg: 1, xl: 2 },
+              mb: { xs: 0.5, sm: 1, md: 1, lg: 1, xl: 2 },
             }}
           >
             <Box>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
+                }}
+              >
                 Active Alarms
               </Typography>
-              <Typography variant="h4" sx={{ color: '#ff9800', fontWeight: 700 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  color: '#ff9800',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.35rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
+                }}
+              >
                 {activeAlarms}
               </Typography>
             </Box>
-            <WarningAmberIcon sx={{ fontSize: 40, color: '#ff9800', mr: '20px' }} />
+            <WarningAmberIcon
+              sx={{
+                fontSize: { xs: 32, sm: 36, md: 40 },
+                color: '#ff9800',
+                mr: { xs: 1, sm: '12px', md: '20px' },
+              }}
+            />
           </Box>
         </CardContent>
       </Card>
 
-      {/* DRILL-DOWN DIALOG — same pattern as AlertHotspots */}
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            width: { xs: 'calc(100% - 16px)', sm: 'auto' },
+            maxHeight: { xs: '90vh', sm: '85vh' },
+          },
+        }}
       >
         <DialogTitle
           sx={{
@@ -292,21 +344,28 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
               'linear-gradient(90deg, rgb(0, 212, 255) 0%, rgb(9, 9, 121) 35%, rgb(0, 212, 255) 100%)',
             color: 'white',
             textAlign: 'center',
+            fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.25rem' },
+            py: { xs: 1.25, sm: 1.5 },
+            px: { xs: 1.5, sm: 2 },
           }}
         >
           {dialogTitle}
         </DialogTitle>
 
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogContent sx={{ pt: { xs: 1.5, sm: 2 }, px: { xs: 1, sm: 2 } }}>
           {dialogRows.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary', fontSize: { xs: '0.85rem', sm: '0.9rem' } }}>
               No sites found for this status
             </Box>
           ) : (
             <>
               <TableContainer
                 component={Paper}
-                sx={{ border: '0.5px solid #75767B', borderRadius: 2, maxHeight: 400 }}
+                sx={{
+                  border: '0.5px solid #75767B',
+                  borderRadius: 2,
+                  maxHeight: { xs: 300, sm: 360, md: 400 },
+                }}
               >
                 <Table size="small" stickyHeader>
                   <TableHead>
@@ -326,14 +385,15 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                         sx={{ cursor: 'pointer' }}
                         onClick={() => handleRowClick(row)}
                       >
-                        <TableCell sx={{ textAlign: 'center' }}>{row.zone}</TableCell>
-                        <TableCell sx={{ textAlign: 'center' }}>{row.circle}</TableCell>
-                        <TableCell sx={{ textAlign: 'center' }}>{row.subDivision}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.zone}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.circle}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.subDivision}</TableCell>
                         <TableCell
                           sx={{
                             textAlign: 'center',
                             color: '#1976d2',
                             textDecoration: 'underline',
+                            fontSize: { xs: '0.7rem', sm: '0.8rem' },
                           }}
                         >
                           {row.area}
@@ -343,6 +403,7 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                             textAlign: 'center',
                             color: '#1976d2',
                             textDecoration: 'underline',
+                            fontSize: { xs: '0.7rem', sm: '0.8rem' },
                           }}
                         >
                           {row.siteId}
@@ -361,13 +422,18 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 rowsPerPageOptions={[10, 25, 50, 100]}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                  },
+                }}
               />
             </>
           )}
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions sx={{ px: { xs: 1.5, sm: 2 }, pb: { xs: 1.5, sm: 2 } }}>
           <Button variant="contained" color="error" onClick={() => setDialogOpen(false)}>
             Close
           </Button>
