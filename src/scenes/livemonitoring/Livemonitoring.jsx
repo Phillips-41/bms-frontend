@@ -18,6 +18,14 @@ import { BarChart } from "./NewLiveDashboard/BarChart/BarChart";
 import { Alarms } from "./NewLiveDashboard/Alarms/Alarms";
 import DocumentViewer from "./NewLiveDashboard/DocumentViewer/DocumentViewer";
 
+/**
+ * MUI breakpoints used throughout:
+ *   xs  0–599px     mobile      → single column, page scrolls
+ *   sm  600–899px   tablet      → 2-col layout, no page scroll
+ *   md  900–1199px  small desk  → 3-col layout, no scroll (desktop design)
+ *   lg  1200–1535px desktop     → 3-col wider sides, no scroll
+ *   xl  1536px+     large       → 3-col widest sides, no scroll
+ */
 const Livemonitoring = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -29,7 +37,7 @@ const Livemonitoring = () => {
         height: "100%",
         minHeight: 0,
         width: "100%",
-        // Mobile: allow page scroll; tablet & desktop: no scroll
+        // xs only: allow vertical scroll; sm+ lock to viewport
         overflow: { xs: "auto", sm: "hidden" },
         display: "flex",
         flexDirection: "column",
@@ -61,17 +69,18 @@ function Dashboard() {
     <Box
       component="main"
       sx={{
+        // xs: content height follows content (scroll parent)
+        // sm+: fill parent, never grow past viewport
         height: { xs: "auto", sm: "100%" },
         minHeight: { xs: "100%", sm: 0 },
         width: "100%",
-        // Mobile: content can grow and scroll; sm+ (tablet/desktop): fill viewport, no scroll
         overflow: { xs: "visible", sm: "hidden" },
         display: "flex",
         flexDirection: "column",
         background: "var(--background)",
         boxSizing: "border-box",
-        p: { xs: "4px", md: "5px", lg: "6px" },
-        gap: { xs: "4px", md: "5px", lg: "6px" },
+        p: { xs: "4px", sm: "5px", md: "5px", lg: "6px" },
+        gap: { xs: "4px", sm: "5px", md: "5px", lg: "6px" },
       }}
     >
       {/* Header — natural height, never shrinks */}
@@ -84,7 +93,12 @@ function Dashboard() {
         <HealthBar />
       </Box>
 
-      {/* Main grid — takes ALL remaining height on tablet/desktop; stacks on mobile */}
+      {/*
+       * Main grid
+       * xs : 1 column  (cells + alarms stacked inside centre)
+       * sm : 2 columns (centre | alarms) — tablet, no scroll
+       * md+: 3 columns (cells | centre | alarms) — desktop, unchanged
+       */}
       <Box
         sx={{
           flex: { xs: "0 0 auto", sm: "1 1 auto" },
@@ -92,20 +106,21 @@ function Dashboard() {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
+            sm: "minmax(0, 1fr) 160px",
             md: "200px minmax(0, 1fr) 168px",
             lg: "220px minmax(0, 1fr) 180px",
             xl: "240px minmax(0, 1fr) 200px",
           },
-          gap: { xs: "4px", md: "5px", lg: "10px" },
+          gap: { xs: "4px", sm: "5px", md: "5px", lg: "10px" },
           overflow: { xs: "visible", sm: "hidden" },
         }}
       >
-        {/* left: CellsPanel — hidden on xs, visible from md up */}
+        {/* left: CellsPanel — only from md up (desktop) */}
         <Box
           sx={{
             minHeight: 0,
-            height: { xs: "auto", sm: "100%" },
-            overflow: { xs: "visible", sm: "hidden" },
+            height: "100%",
+            overflow: "hidden",
             display: { xs: "none", md: "block" },
           }}
         >
@@ -120,29 +135,36 @@ function Dashboard() {
             minHeight: { xs: "auto", sm: 0 },
             height: { xs: "auto", sm: "100%" },
             overflow: { xs: "visible", sm: "hidden" },
-            gridTemplateColumns: { xs: "1fr", md: "repeat(12, minmax(0, 1fr))" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              // tablet: 2-col so pairs sit side-by-side and fit without scroll
+              sm: "repeat(2, minmax(0, 1fr))",
+              // desktop: 12-col system (original)
+              md: "repeat(12, minmax(0, 1fr))",
+            },
             gridTemplateRows: {
               xs: "none",
-              // Tablet (sm–md): fixed-ish rows so content fits without scroll
-              sm: "minmax(72px, 1.1fr) minmax(48px, 0.9fr) minmax(90px, 1.6fr) minmax(90px, 1.6fr)",
+              sm: "minmax(0, 1.1fr) minmax(0, 0.85fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.8fr)",
               md: "1.1fr 0.9fr 1.6fr 1.6fr",
             },
-            gap: { xs: "4px", md: "5px", lg: "8px" },
+            gap: { xs: "4px", sm: "5px", md: "5px", lg: "8px" },
           }}
         >
-          {/* LiveBattery + StateOfCharge */}
+          {/* LiveBattery */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "1", md: "span 6" },
               minHeight: { xs: 80, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
           >
             <LiveBattery />
           </Box>
+
+          {/* StateOfCharge */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "2", md: "span 6" },
               minHeight: { xs: 80, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
@@ -150,10 +172,10 @@ function Dashboard() {
             <StateOfCharge />
           </Box>
 
-          {/* Charger */}
+          {/* Charger — full width */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "1 / -1" },
+              gridColumn: { xs: "1", sm: "1 / -1", md: "1 / -1" },
               minHeight: { xs: 64, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
@@ -161,19 +183,21 @@ function Dashboard() {
             <Charger />
           </Box>
 
-          {/* Cumulative + Cycles */}
+          {/* Cumulative */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "1", md: "span 6" },
               minHeight: { xs: 100, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
           >
             <Cumulative />
           </Box>
+
+          {/* Cycles */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "2", md: "span 6" },
               minHeight: { xs: 100, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
@@ -184,7 +208,7 @@ function Dashboard() {
           {/* Bar charts */}
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "1", md: "span 6" },
               minHeight: { xs: 140, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
@@ -199,7 +223,7 @@ function Dashboard() {
           </Box>
           <Box
             sx={{
-              gridColumn: { xs: "1", md: "span 6" },
+              gridColumn: { xs: "1", sm: "2", md: "span 6" },
               minHeight: { xs: 140, sm: 0 },
               overflow: { xs: "visible", sm: "hidden" },
             }}
@@ -213,36 +237,50 @@ function Dashboard() {
             />
           </Box>
 
-          {/* Mobile-only: CellsPanel + Alarms stacked below charts */}
+          {/*
+           * CellsPanel — mobile (xs) only, stacked under charts.
+           * On sm tablet it sits in its own column below charts (full width of centre).
+           * Hidden from md up (desktop uses left rail).
+           */}
           <Box
             sx={{
-              gridColumn: "1",
+              gridColumn: { xs: "1", sm: "1 / -1" },
               display: { xs: "block", md: "none" },
-              minHeight: 280,
-              overflow: "visible",
+              minHeight: { xs: 280, sm: 0 },
+              height: { xs: "auto", sm: "100%" },
+              overflow: { xs: "visible", sm: "hidden" },
             }}
           >
             <CellsPanel />
           </Box>
-          <Box
-            sx={{
-              gridColumn: "1",
-              display: { xs: "block", md: "none" },
-              minHeight: 200,
-              overflow: "visible",
-            }}
-          >
-            <Alarms items={mockAlarms} />
-          </Box>
         </Box>
 
-        {/* right: Alarms — hidden on xs, visible from md up */}
+        {/*
+         * right: Alarms
+         * xs  : hidden here (shown inside centre stack via mobile block above — wait, Alarms is separate)
+         * sm+ : visible as right column
+         * md+ : visible as right column (desktop)
+         *
+         * On xs we still need Alarms somewhere — render a mobile-only copy below.
+         */}
         <Box
           sx={{
             minHeight: 0,
-            height: { xs: "auto", sm: "100%" },
-            overflow: { xs: "visible", sm: "hidden" },
-            display: { xs: "none", md: "block" },
+            height: "100%",
+            overflow: "hidden",
+            display: { xs: "none", sm: "block" },
+          }}
+        >
+          <Alarms items={mockAlarms} />
+        </Box>
+
+        {/* Mobile-only Alarms (xs) — sits after the centre grid as full-width row */}
+        <Box
+          sx={{
+            gridColumn: "1",
+            display: { xs: "block", sm: "none" },
+            minHeight: 200,
+            overflow: "visible",
           }}
         >
           <Alarms items={mockAlarms} />
@@ -267,7 +305,6 @@ function AlarmsRail({ Mdata }) {
         boxSizing: "border-box",
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -309,7 +346,6 @@ function AlarmsRail({ Mdata }) {
           </span>
         )}
       </div>
-      {/* Description */}
       {description && (
         <div
           style={{
@@ -337,7 +373,6 @@ function AlarmsRail({ Mdata }) {
           </div>
         </div>
       )}
-      {/* Documents */}
       <div>
         <div
           style={{
