@@ -8,16 +8,17 @@ import {
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useSiteNavigation } from './dashboardUtils';
+import './CircleStatusCard.css';
 
 const TABLE_CELL_STYLE = {
   color: 'black',
   fontWeight: 'bold',
   background: 'linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))',
-  padding: { xs: '4px 6px', sm: '3px 4px', md: '3px' },
-  minWidth: { xs: 100, sm: 120, md: 150 },
+  padding: '3px 6px',
+  minWidth: 120,
   whiteSpace: 'nowrap',
   textAlign: 'center',
-  fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+  fontSize: '0.75rem',
 };
 
 const STATUS_TYPE = {
@@ -116,139 +117,49 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
   }, [dialogRows, page, rowsPerPage]);
 
   const pieData = [
-    {
-      name: 'Communicating',
-      value: communicating,
-      color: '#2ecc71',
-      statusType: STATUS_TYPE.COMMUNICATING,
-    },
-    {
-      name: 'Non-Communicating',
-      value: non_communicating,
-      color: '#ff4d4d',
-      statusType: STATUS_TYPE.NON_COMMUNICATING,
-    },
+    { name: 'Communicating', value: communicating, color: '#2ecc71' },
+    { name: 'Non-Communicating', value: non_communicating, color: '#ff4d4d' },
   ];
 
   return (
     <>
-      <Card
-        variant="outlined"
-        sx={{
-          height: '100%',
-          width: '100%',
-          bgcolor: 'background.paper',
-          borderColor: 'divider',
-          borderRadius: { xs: 1.5, sm: 2, md: 2 },
-        }}
-      >
-        <CardContent
-          sx={{
-            p: { xs: 1.25, sm: 1.5, md: 1.5, lg: 1.5, xl: 2 },
-            '&:last-child': { pb: { xs: 1.25, sm: 1.5, lg: 1 } },
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'text.primary',
-              fontWeight: 700,
-              mb: { xs: 1, sm: 1.25, md: 1, lg: 1, xl: 1.5 },
-              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem', lg: '1.1rem' },
-            }}
-          >
-            STATUS
-          </Typography>
+      <Card variant="outlined" className="csc-card" sx={{ bgcolor: 'background.paper', borderColor: 'divider' }}>
+        <CardContent className="csc-content">
+          <Typography className="csc-title" color="text.primary">STATUS</Typography>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: { xs: 1.5, sm: 2, md: 2, lg: 3, xl: 2 },
-              gap: { xs: 1, sm: 1.5 },
-            }}
-          >
+          <Box className="csc-row">
             <Box sx={{ minWidth: 0 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
-                }}
-              >
+              <Typography className="csc-label" color="text.secondary">
                 Total Monitored Sites
               </Typography>
+              <Typography className="csc-total">{totalMonitoredSites}</Typography>
 
-              <Typography
-                variant="h3"
-                sx={{
-                  color: '#2ecc71',
-                  fontWeight: 700,
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem', lg: '3rem' },
-                }}
-              >
-                {totalMonitoredSites}
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <Box className="csc-ratio">
                 <Typography
-                  variant="caption"
+                  className="csc-ratio-num ok"
                   onClick={() => handleSliceClick({ name: 'Communicating' })}
-                  sx={{
-                    color: '#2ecc71',
-                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
                 >
                   {communicating}
                 </Typography>
-
+                <Typography className="csc-ratio-sep" color="text.secondary">/</Typography>
                 <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                    fontWeight: 500,
-                  }}
-                >
-                  /
-                </Typography>
-
-                <Typography
-                  variant="caption"
+                  className="csc-ratio-num bad"
                   onClick={() => handleSliceClick({ name: 'Non-Communicating' })}
-                  sx={{
-                    color: '#ff4d4d',
-                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
                 >
                   {non_communicating}
                 </Typography>
               </Box>
             </Box>
 
-            <Box
-              sx={{
-                width: { xs: 70, sm: 75, md: 80 },
-                height: { xs: 70, sm: 75, md: 80 },
-                position: 'relative',
-                flexShrink: 0,
-              }}
-            >
+            <Box className="csc-pie">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={25}
-                    outerRadius={35}
+                    innerRadius={22}
+                    outerRadius={32}
                     paddingAngle={2}
                     dataKey="value"
                     startAngle={90}
@@ -256,71 +167,23 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                     onClick={(entry) => handleSliceClick(entry)}
                   >
                     {pieData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        style={{ cursor: 'pointer' }}
-                      />
+                      <Cell key={`cell-${index}`} fill={entry.color} style={{ cursor: 'pointer' }} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
-
-              <Typography
-                variant="caption"
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontWeight: 700,
-                  fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
-                  color: 'text.primary',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                }}
-              >
+              <Typography className="csc-pie-center" color="text.primary">
                 {modemCommsUptime}
               </Typography>
             </Box>
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: { xs: 0.5, sm: 1, md: 1, lg: 1, xl: 2 },
-            }}
-          >
+          <Box className="csc-alarms-row">
             <Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
-                }}
-              >
-                Active Alarms
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  color: '#ff9800',
-                  fontWeight: 700,
-                  fontSize: { xs: '1.35rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
-                }}
-              >
-                {activeAlarms}
-              </Typography>
+              <Typography className="csc-label" color="text.secondary">Active Alarms</Typography>
+              <Typography className="csc-alarms-value">{activeAlarms}</Typography>
             </Box>
-            <WarningAmberIcon
-              sx={{
-                fontSize: { xs: 32, sm: 36, md: 40 },
-                color: '#ff9800',
-                mr: { xs: 1, sm: '12px', md: '20px' },
-              }}
-            />
+            <WarningAmberIcon className="csc-alarms-icon" />
           </Box>
         </CardContent>
       </Card>
@@ -330,43 +193,28 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
         onClose={() => setDialogOpen(false)}
         maxWidth="lg"
         fullWidth
-        PaperProps={{
-          sx: {
-            m: { xs: 1, sm: 2 },
-            width: { xs: 'calc(100% - 16px)', sm: 'auto' },
-            maxHeight: { xs: '90vh', sm: '85vh' },
-          },
-        }}
+        PaperProps={{ sx: { m: { xs: 1, sm: 2 }, maxHeight: '90vh' } }}
       >
         <DialogTitle
           sx={{
-            background:
-              'linear-gradient(90deg, rgb(0, 212, 255) 0%, rgb(9, 9, 121) 35%, rgb(0, 212, 255) 100%)',
+            background: 'linear-gradient(90deg, rgb(0, 212, 255) 0%, rgb(9, 9, 121) 35%, rgb(0, 212, 255) 100%)',
             color: 'white',
             textAlign: 'center',
-            fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.25rem' },
-            py: { xs: 1.25, sm: 1.5 },
-            px: { xs: 1.5, sm: 2 },
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            py: 1.25,
           }}
         >
           {dialogTitle}
         </DialogTitle>
 
-        <DialogContent sx={{ pt: { xs: 1.5, sm: 2 }, px: { xs: 1, sm: 2 } }}>
+        <DialogContent sx={{ pt: 2, px: { xs: 1, sm: 2 } }}>
           {dialogRows.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary', fontSize: { xs: '0.85rem', sm: '0.9rem' } }}>
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary', fontSize: '0.85rem' }}>
               No sites found for this status
             </Box>
           ) : (
             <>
-              <TableContainer
-                component={Paper}
-                sx={{
-                  border: '0.5px solid #75767B',
-                  borderRadius: 2,
-                  maxHeight: { xs: 300, sm: 360, md: 400 },
-                }}
-              >
+              <TableContainer component={Paper} sx={{ border: '0.5px solid #75767B', borderRadius: 2, maxHeight: 360 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -379,41 +227,17 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                   </TableHead>
                   <TableBody>
                     {paginatedRows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        hover
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => handleRowClick(row)}
-                      >
-                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.zone}</TableCell>
-                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.circle}</TableCell>
-                        <TableCell sx={{ textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>{row.subDivision}</TableCell>
-                        <TableCell
-                          sx={{
-                            textAlign: 'center',
-                            color: '#1976d2',
-                            textDecoration: 'underline',
-                            fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                          }}
-                        >
-                          {row.area}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            textAlign: 'center',
-                            color: '#1976d2',
-                            textDecoration: 'underline',
-                            fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                          }}
-                        >
-                          {row.siteId}
-                        </TableCell>
+                      <TableRow key={row.id} hover sx={{ cursor: 'pointer' }} onClick={() => handleRowClick(row)}>
+                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{row.zone}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{row.circle}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{row.subDivision}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', color: '#1976d2', textDecoration: 'underline', fontSize: '0.75rem' }}>{row.area}</TableCell>
+                        <TableCell sx={{ textAlign: 'center', color: '#1976d2', textDecoration: 'underline', fontSize: '0.75rem' }}>{row.siteId}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </TableContainer>
-
               <TablePagination
                 component="div"
                 count={dialogRows.length}
@@ -422,21 +246,14 @@ export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 rowsPerPageOptions={[10, 25, 50, 100]}
-                sx={{
-                  mt: 1,
-                  '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                  },
-                }}
+                sx={{ mt: 1, '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': { fontSize: '0.75rem' } }}
               />
             </>
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: { xs: 1.5, sm: 2 }, pb: { xs: 1.5, sm: 2 } }}>
-          <Button variant="contained" color="error" onClick={() => setDialogOpen(false)}>
-            Close
-          </Button>
+        <DialogActions sx={{ px: 2, pb: 1.5 }}>
+          <Button variant="contained" color="error" onClick={() => setDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>
