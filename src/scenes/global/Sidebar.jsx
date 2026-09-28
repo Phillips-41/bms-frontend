@@ -141,7 +141,7 @@ const Sidebar = () => {
     { title: "Issue Tracking", to: "/issuetracking", icon: <BugReportOutlined sx={{ color: "#ffff" }} />, permission: "issuetracking" },
     { title: "Site Details", to: "/siteDetails", icon: <LocationOnOutlined sx={{ color: "#ffff" }} />, permission: "siteDetails" },
     { title: "Users", to: "/users", icon: <GroupOutlined sx={{ color: "#ffff" }} />, permission: "users" },
-   // { title: "PacketViewer", to: "/packetviewer", icon: <GroupOutlined sx={{ color: "#ffff" }} />, permission: "packetviewer" },
+   { title: "PacketViewer", to: "/packetviewer", icon: <GroupOutlined sx={{ color: "#ffff" }} />, permission: "packetviewer" },
   ];
 
   // Set selected item based on current path

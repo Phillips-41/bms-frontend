@@ -40,10 +40,10 @@ const SearchAndAddButtons = ({
  
 }) => {
   const {
-    siteIdOptions,
-    serialNumberOptions,
-    siteId,
-    serialNumber,
+    siteIdOptions=[],
+    serialNumberOptions=[],
+    siteId='',
+    serialNumber='',
     setSiteId,
     setSerialNumber,
     setSerialNumberOptions,
@@ -55,17 +55,22 @@ const SearchAndAddButtons = ({
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [severity, setSeverity] = useState('error');
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
-  const handleSiteIdChange = (selectedSiteId) => {
-    setSiteId(selectedSiteId);
-    setSerialNumber("");
-    const selectedSite = siteIdOptions.find((site) => site.siteId === selectedSiteId);
-    if (selectedSite) {
-      setSerialNumberOptions(selectedSite?.serialNumbers);
-    } else {
-      setSerialNumberOptions([]);
-    }
-  };
+const safeSiteIdOptions = Array.isArray(siteIdOptions) ? siteIdOptions : [];
+const siteIdValues = safeSiteIdOptions.map((site) =>
+  typeof site === 'string' ? site : site?.siteId
+).filter(Boolean);
+ const handleSiteIdChange = (selectedSiteId) => {
+  setSiteId(selectedSiteId);
+  setSerialNumber('');
+  const selectedSite = safeSiteIdOptions.find(
+    (site) => (typeof site === 'string' ? site : site?.siteId) === selectedSiteId
+  );
+  if (selectedSite && typeof selectedSite === 'object') {
+    setSerialNumberOptions(selectedSite.serialNumbers || []);
+  } else {
+    setSerialNumberOptions([]);
+  }
+}
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);

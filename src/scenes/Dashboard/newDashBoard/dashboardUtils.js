@@ -2,6 +2,8 @@ import { useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../../../services/AppContext';
 
+export const DEFAULT_STATE = 'Maharastra';
+
 export const useSiteNavigation = () => {
   const navigate = useNavigate();
   const {
@@ -21,34 +23,26 @@ export const useSiteNavigation = () => {
       siteId,
       area,
       serialNumber,
-      state,
       zone,
       circle,
       division,
     } = {}) => {
-      // 1) Update hierarchy so Header selects show the right values + options
-      if (state) await handleStateChange?.(state);
+      await handleStateChange?.(DEFAULT_STATE);
       if (zone) await handleZoneChange?.(zone);
       if (circle) await handleCircleChange?.(circle);
       if (division) await handleDivisionChange?.(division);
 
       if (area != null) setArea?.(area);
+      setDeviceId?.('');
 
-      // Clear deviceId so manufacturer is not skipped if someone calls handleSearch() alone
-      setDeviceId?.("");
+      if (siteId) setSiteId?.(siteId);
+      if (serialNumber) setSerialNumber?.(serialNumber);
 
-      if (siteId != null) setSiteId?.(siteId);
-      if (serialNumber != null) setSerialNumber?.(serialNumber);
+      // 3) Search + navigate
+      const ok = await handleSearch?.({ area, forceManufacturer: true,});
 
-      // 2) Search with explicit area (not stale closure) + always load manufacturer
-      const ok = await handleSearch?.({
-        area,
-        forceManufacturer: true,
-      });
-
-      // 3) Open live dashboard — Header already has filters set
       if (ok !== 0 && ok !== false) {
-        navigate("/livemonitoring", { state: { from: "/" } });
+        navigate('/livemonitoring', { state: { from: '/' } });
       }
     },
     [
@@ -68,8 +62,6 @@ export const useSiteNavigation = () => {
   return { goToLiveMonitoring };
 };
 
-
-export const DEFAULT_STATE = 'Maharastra';
 
 export const ALARM_DEFS = [
   { key: 'inputMains',      label: 'Input Mains Fail',          check: (i) => !!i.inputMains },
@@ -97,13 +89,14 @@ export const ALARM_DEFS = [
 ];
 
 const ALARM_PRIORITY = [
-  'bmsComm',
   'cellComm',
   'inputMains',
+  'inputPhase',
   'outputMccb',
   'chargerTrip',
   'ambientTemp',
   'cellTemp',
+  'alarmSupply',
 ];
 
 const safeCheck = (def, item) => {
@@ -148,7 +141,6 @@ export const filterByHierarchy = (list = [], { zone, circle, division, area } = 
   });
 };
 
-
 export const isCommunicating = (item) => {
   if (!item) return false;
   const flag = item.isNotCommunicating;
@@ -164,7 +156,8 @@ export const isCommunicating = (item) => {
 export const buildCircleStatus = (list = []) => {
   const totalSites = list.length;
   const communicating = list.filter(isCommunicating).length;
-  const activeAlarms = list.filter(hasActiveAlarm).length;
+  const comm = list.filter((i) => i.isNotCommunicating === false);
+  const activeAlarms = comm.filter(hasActiveAlarm).length;
 
   return {
     communicating,
@@ -265,22 +258,4 @@ export const getLatestActiveAlarms = (list = [], limit = 6) => {
     .sort((a, b) => b._sort - a._sort)
     .slice(0, limit)
     .map(({ _sort, ...rest }) => rest);
-};
-
-export const applyFilterChange = (prev, key, value, defaults) => {
-  if (key === 'clear') return { ...defaults };
-
-  const next = { ...prev, [key]: value };
-
-  if (key === 'state') {
-    next.zone = next.circle = next.division = next.area = '';
-  } else if (key === 'zone') {
-    next.circle = next.division = next.area = '';
-  } else if (key === 'circle') {
-    next.division = next.area = '';
-  } else if (key === 'division') {
-    next.area = '';
-  }
-
-  return next;
 };

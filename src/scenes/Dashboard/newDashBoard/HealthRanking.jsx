@@ -6,9 +6,10 @@ import {
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import PowerOffIcon from '@mui/icons-material/PowerOff';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BoltIcon from '@mui/icons-material/Bolt';
 import { hasActiveAlarm, filterByHierarchy, useSiteNavigation } from './dashboardUtils';
 
-// LEVELS
 const LEVELS = ['zone', 'circle', 'division', 'area'];
 
 const LEVEL_LABELS = {
@@ -18,31 +19,26 @@ const LEVEL_LABELS = {
   area: 'AREA',
 };
 
-const resolveLevel = (userAccess, filters = {}) => {
-  const zone     = filters.zone     || userAccess?.zone?.value     || '';
-  const circle   = filters.circle   || userAccess?.circle?.value   || '';
-  const division = filters.division || userAccess?.division?.value || '';
+const FIELD_ALIASES = {
+  zone:     ['zone', 'siteLocationDTO.zone'],
+  circle:   ['circle', 'siteLocationDTO.circle'],
+  division: ['division', 'divison', 'siteLocationDTO.division'],
+  area:     ['area', 'siteLocationDTO.area'],
+};
 
+const resolveLevel = (filters = {}) => {
+  const { zone = '', circle = '', division = '' } = filters;
   if (!zone)     return { key: 'zone',     label: 'ZONE' };
   if (!circle)   return { key: 'circle',   label: 'CIRCLE' };
   if (!division) return { key: 'division', label: 'SUB DIVISION' };
   return { key: 'area', label: 'AREA' };
 };
 
-// FIELD ALIASES
-const FIELD_ALIASES = {
-  zone:     ['zone', 'siteLocationDTO.zone'],
-  circle:   ['circle', 'siteLocationDTO.circle'],
-  division: ['division', 'divison', 'siteLocationDTO.division', 'siteLocationDTO.divison'],
-  area:     ['area', 'siteLocationDTO.area'],
-};
-
 const pickField = (item, aliases) => {
-  for (const k of aliases) {
-    const parts = k.split('.');
-    let v = item;
-    for (const p of parts) v = v?.[p];
-    if (v != null && v !== '') return v;
+  for (const alias of aliases) {
+    let value = item;
+    for (const part of alias.split('.')) value = value?.[part];
+    if (value != null && value !== '') return value;
   }
   return null;
 };
@@ -50,100 +46,139 @@ const pickField = (item, aliases) => {
 const eq = (a, b) =>
   String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
 
-// HEALTH-COLORS
-const getHealthColor = (score) => {
-  if (score >= 80) return '#00E676';
-  if (score >= 60) return '#FFC107';
-  return '#FF3D00';
+const isCommunicating = (item) => {
+  if (!item) return false;
+  if (typeof item.isNotCommunicating === 'boolean') {
+    return item.isNotCommunicating === false;
+  }
+  return true;
 };
-const getAlarmColor = (alarms) => (alarms > 5 ? '#FF3D00' : '#ff9800');
-const getTrendColor = (trend) => (trend > 0 ? '#FF3D00' : '#9E9E9E');
 
-// AGGREGATION
+const getHealthColor = (score) => (score >= 80 ? '#00E676' : score >= 60 ? '#FFC107' : '#FF3D00');
+const getAlarmColor  = (n) => (n > 0 ? '#ff9800' : '#9E9E9E');
+const getCountColor  = (n) => (n > 0 ? '#FF3D00' : '#9E9E9E');
+const getActiveColor = (n) => (n > 0 ? '#00E676' : '#9E9E9E');
+
+const getChargerTripCount = (item) => {
+  if (!item) return 0;
+  const ct = item.chargerTrip ?? item.chargerTripCount ?? item.chargerTripStatus;
+  if (ct == null) return 0;
+  if (typeof ct === 'number') return ct;
+  if (typeof ct === 'boolean') return ct ? 1 : 0;
+  if (Array.isArray(ct)) return ct.length;
+  return 0;
+};
+
 const buildRanking = (list, levelKey) => {
   if (!Array.isArray(list) || !list.length) return [];
+
   const aliases = FIELD_ALIASES[levelKey] || FIELD_ALIASES.zone;
   const groups = new Map();
 
   for (const item of list) {
     const name = pickField(item, aliases);
     if (!name) continue;
+
     const key = String(name);
     if (!groups.has(key)) {
-      groups.set(key, { name: key, sites: 0, alarms: 0, chargerTrip: 0 });
+      groups.set(key, { name: key, sites: 0, offline: 0, alarms: 0, chargerTrip: 0 });
     }
+
     const g = groups.get(key);
     g.sites += 1;
-    if (hasActiveAlarm(item)) g.alarms += 1;
-    if (item?.chargerTrip) g.chargerTrip += 1;
+
+    if (isCommunicating(item)) {
+      // only communicating devices contribute to alarm count
+      if (hasActiveAlarm(item)) g.alarms += 1;
+    } else {
+      g.offline += 1;
+    }
+
+    g.chargerTrip += getChargerTripCount(item);
   }
 
   return Array.from(groups.values())
     .map((g) => {
-      const health = g.sites > 0 ? ((g.sites - g.alarms) / g.sites) * 100 : 0;
+      const active  = Math.max(0, g.sites - g.offline);
+      const healthy = Math.max(0, active - g.alarms);
+      const health  = g.sites > 0 ? Math.round((healthy / g.sites) * 100) : 0;
+
       return {
         id: g.name,
         name: g.name,
         sites: g.sites,
-        health: Math.round(health),
-        trend: g.alarms,
+        active,
+        offline: g.offline,
         alarms: g.alarms,
         chargerTrip: g.chargerTrip,
+        health,
       };
     })
     .sort((a, b) => b.health - a.health);
 };
-
-// SUB-COMPONENTS 
-const SitesIndicator = ({ sites }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.primary' }}>
-    <Box sx={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #8B95A5', mr: 0.5 }} />
-    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{sites} sites</Typography>
-  </Box>
-);
 
 const HealthProgress = ({ health, color }) => (
   <LinearProgress
     variant="determinate"
     value={health}
     sx={{
-      height: 6, borderRadius: 4, backgroundColor: '#232A36',
+      height: 5,
+      borderRadius: 4,
+      backgroundColor: '#232A36',
       '& .MuiLinearProgress-bar': { backgroundColor: color, borderRadius: 4 },
     }}
   />
 );
 
-const MetricChip = ({ icon: Icon, value, label, alarms }) => (
-  <Box sx={{
-    flex: 1, display: 'flex', alignItems: 'center',
-    backgroundColor: 'background.paper',
-    border: '1px solid', borderColor: 'divider',
-    borderRadius: 1.5, p: 0.5,
-  }}>
-    <Icon sx={{ color: getAlarmColor(alarms), fontSize: 18, mr: 1 }} />
-    <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600 }}>
+const MetricChip = ({ icon: Icon, value, label, color }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 0.5,
+      minWidth: 0,
+      backgroundColor: 'background.paper',
+      border: '1px solid',
+      borderColor: 'divider',
+      borderRadius: 1,
+      px: 0.6,
+      py: 0.35,
+      overflow: 'hidden',
+    }}
+  >
+    <Icon sx={{ color, fontSize: 14, flexShrink: 0 }} />
+    <Typography
+      variant="caption"
+      sx={{
+        color: 'text.primary',
+        fontWeight: 700,
+        fontSize: '0.72rem',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
       {value}{' '}
-      <Typography component="span" variant="body2" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+      <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400, fontSize: '0.68rem' }}>
         {label}
-      </Typography>
+      </Box>
     </Typography>
   </Box>
 );
 
 const RankingCard = ({ item, onClick }) => {
   const healthColor = getHealthColor(item.health);
-  const trendColor = getTrendColor(item.trend);
 
   return (
     <Card
       onClick={onClick}
       sx={{
         backgroundColor: 'background.paper',
-        borderRadius: 3,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: 'none',
-        minHeight: 108,
         display: 'flex',
         flexDirection: 'column',
         cursor: 'pointer',
@@ -151,31 +186,47 @@ const RankingCard = ({ item, onClick }) => {
         '&:hover': { borderColor: 'primary.main', transform: 'translateY(-1px)' },
       }}
     >
-      <CardContent sx={{ p: 1, '&:last-child': { pb: 0.5 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5, gap: 1 }}>
+      <CardContent
+        sx={{
+          p: 1.1,
+          '&:last-child': { pb: 1.1 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.75,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
-              variant="h6"
-              sx={{ color: 'text.primary', fontWeight: 600, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
               title={item.name}
+              sx={{
+                color: 'text.primary',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
             >
               {item.name}
             </Typography>
-            <SitesIndicator sites={item.sites} />
           </Box>
+
           <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-            <Typography variant="h4" sx={{ color: healthColor, fontWeight: 600, lineHeight: 1 }}>
+            <Typography sx={{ color: healthColor, fontWeight: 700, fontSize: '1rem', lineHeight: 1 }}>
               {item.health}%
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.8rem', color: trendColor, mt: 0.5 }}>
-              Alarms - {item.trend}
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ mb: 0.5 }}><HealthProgress health={item.health} color={healthColor} /></Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <MetricChip icon={WarningAmberIcon} value={item.alarms} label="alarms" alarms={item.alarms} />
-          <MetricChip icon={PowerOffIcon} value={item.chargerTrip} label="Charger Trip" alarms={item.chargerTrip} />
+
+        <HealthProgress health={item.health} color={healthColor} />
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.6 }}>
+          <MetricChip icon={CheckCircleIcon}  value={item.active}      label="Online"       color={getActiveColor(item.active)} />
+          <MetricChip icon={PowerOffIcon}     value={item.offline}     label="Offline"      color={getCountColor(item.offline)} />
+          <MetricChip icon={WarningAmberIcon} value={item.alarms}      label="Alarms"       color={getAlarmColor(item.alarms)} />
+          <MetricChip icon={BoltIcon}         value={item.chargerTrip} label="Charger Trip" color={getCountColor(item.chargerTrip)} />
         </Box>
       </CardContent>
     </Card>
@@ -184,7 +235,6 @@ const RankingCard = ({ item, onClick }) => {
 
 const RankingTableRow = ({ item, onClick }) => {
   const healthColor = getHealthColor(item.health);
-  const trendColor = getTrendColor(item.trend);
 
   return (
     <TableRow
@@ -193,154 +243,146 @@ const RankingTableRow = ({ item, onClick }) => {
       sx={{
         cursor: 'pointer',
         '&:last-child td': { borderBottom: 0 },
-        '& td': { py: 0.75, borderColor: 'divider' },
+        '& td': { py: 0.6, px: 0.75, borderColor: 'divider' },
       }}
     >
-      <TableCell sx={{ maxWidth: 160, overflow: 'hidden' }}>
+      <TableCell sx={{ maxWidth: 140, overflow: 'hidden' }}>
         <Typography
-          variant="body2"
-          sx={{ fontWeight: 600, color: 'text.primary', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
           title={item.name}
+          variant="body2"
+          sx={{
+            fontWeight: 600,
+            color: 'text.primary',
+            fontSize: '0.8rem',
+            whiteSpace: 'wrap',
+          }}
         >
           {item.name}
         </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-          {item.sites}/
-          <Box component="span" sx={{ color: trendColor, fontWeight: 600 }}>{item.trend}</Box>
+      </TableCell>
+      <TableCell align="center" sx={{ width: 52 }}>
+        <Typography variant="body2" sx={{ color: healthColor, fontWeight: 700, fontSize: '0.8rem' }}>
+          {item.health}%
         </Typography>
       </TableCell>
-      <TableCell align="center" sx={{ width: 64 }}>
-        <Typography variant="body2" sx={{ color: healthColor, fontWeight: 600 }}>{item.health}%</Typography>
+      <TableCell align="center" sx={{ width: 48 }}>
+        <Typography variant="body2" sx={{ color: getAlarmColor(item.alarms), fontWeight: 700, fontSize: '0.8rem' }}>
+          {item.alarms}
+        </Typography>
       </TableCell>
-      <TableCell align="center" sx={{ width: 64 }}>
-        <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600 }}>{item.alarms}</Typography>
-      </TableCell>
-      <TableCell align="center" sx={{ width: 90 }}>
-        <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 600 }}>{item.chargerTrip}</Typography>
+      <TableCell align="center" sx={{ width: 48 }}>
+        <Typography variant="body2" sx={{ color: getCountColor(item.chargerTrip), fontWeight: 700, fontSize: '0.8rem' }}>
+          {item.chargerTrip}
+        </Typography>
       </TableCell>
     </TableRow>
   );
 };
 
-//  DIALOG CELL STYLE
+
 const TABLE_CELL_STYLE = {
   color: 'black',
   fontWeight: 'bold',
   background: 'linear-gradient(to bottom, rgb(73 196 53), rgb(50 128 63))',
-  padding: '3px',
+  padding: '6px 8px',
   minWidth: '150px',
   whiteSpace: 'nowrap',
   textAlign: 'center',
 };
 
-// MAIN 
-export default function HealthRanking({ totalData = [], filters = {}, userAccess }) {
-
+// MAIN
+export default function HealthRanking({ totalData = [], filters = {} }) {
   const { goToLiveMonitoring } = useSiteNavigation();
 
-  // scoped view
   const scopedData = useMemo(
     () => filterByHierarchy(totalData, filters || {}),
     [totalData, filters.zone, filters.circle, filters.division, filters.area]
   );
 
   const { key: levelKey, label: levelLabel } = useMemo(
-    () => resolveLevel(userAccess, filters),
-    [userAccess, filters.zone, filters.circle, filters.division, filters.area]
+    () => resolveLevel(filters),
+    [filters.zone, filters.circle, filters.division, filters.area]
   );
 
   const ranked = useMemo(() => buildRanking(scopedData, levelKey), [scopedData, levelKey]);
   const useGridLayout = ranked.length > 0 && ranked.length <= 4;
-  const displayRows = ranked.slice(0, 7);
+  const displayRows = ranked;
 
-  //  DRILL-DOWN STATE
-  const [dialogOpen, setDialogOpen]     = useState(false);
-  const [dialogTitle, setDialogTitle]   = useState('');
-  const [dialogRows, setDialogRows]     = useState([]);
-  const [dialogLevel, setDialogLevel]   = useState(null);      // 'circle' | 'division' | 'area' | 'device'
-  const [drillPath, setDrillPath]       = useState({});        // { zone, circle, division, area }
-  const [leafMode, setLeafMode]         = useState(false);     // true => rows navigate to live monitoring
+  const [dialogOpen, setDialogOpen]   = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogRows, setDialogRows]   = useState([]);
+  const [dialogLevel, setDialogLevel] = useState(null);
+  const [drillPath, setDrillPath]     = useState({});
 
-  // Reset dialog when filters change externally
   useEffect(() => {
     setDialogOpen(false);
     setDialogRows([]);
     setDrillPath({});
-    setLeafMode(false);
   }, [filters.zone, filters.circle, filters.division, filters.area]);
 
-  
   const buildDrillRows = useCallback((path, nextLevel) => {
-    // path = { zone?, circle?, division?, area? } accumulated ancestors
-    // 1. filter totalData down to that path
     let scoped = totalData;
     for (const key of LEVELS) {
-      if (path[key]) scoped = scoped.filter((d) => {
-        const v = pickField(d, FIELD_ALIASES[key]);
-        return eq(v, path[key]);
-      });
+      if (path[key]) {
+        scoped = scoped.filter((d) => eq(pickField(d, FIELD_ALIASES[key]), path[key]));
+      }
     }
 
     if (nextLevel === 'device') {
-      // leaf: one row per site
       return scoped
-        .map((d) => {
-          const siteId = d.siteId || d.siteLocationDTO?.siteId || '--';
-          const serialNumber = d.serialNumber || d.generalDataDTO?.deviceDataDTO?.[0]?.serialNumber || 'N/A';
-          const location = d.area || d.siteLocationDTO?.area || d.name || '--';
-          const alarms = hasActiveAlarm(d);
-          return {
-            name: location,
-            siteId,
-            serialNumber,
-            count: alarms ? 1 : 0,
-            _raw: d,
-          };
-        })
-        .filter((r) => r.count > 0)
+        .filter((d) => isCommunicating(d) && hasActiveAlarm(d))
+        .map((d) => ({
+          name:         d.area || d.siteLocationDTO?.area || d.name || '--',
+          siteId:       d.siteId || d.siteLocationDTO?.siteId || '--',
+          count:        1,
+          zone:         pickField(d, FIELD_ALIASES.zone),
+          circle:       pickField(d, FIELD_ALIASES.circle),
+          division:     pickField(d, FIELD_ALIASES.division),
+          area:         pickField(d, FIELD_ALIASES.area),
+          serialNumber: d.serialNumber || d.siteLocationDTO?.serialNumber,
+          state:        d.state || d.siteLocationDTO?.state,
+        }))
         .sort((a, b) => b.count - a.count);
     }
 
-    // non-leaf: group by nextLevel
+    /* grouped level */
     const aliases = FIELD_ALIASES[nextLevel];
     const groups = new Map();
 
     for (const d of scoped) {
       const name = pickField(d, aliases);
       if (!name) continue;
+
       const key = String(name);
       if (!groups.has(key)) groups.set(key, { name: key, count: 0, sites: 0 });
+
       const g = groups.get(key);
       g.sites += 1;
-      if (hasActiveAlarm(d)) g.count += 1;
+
+      if (isCommunicating(d) && hasActiveAlarm(d)) {
+        g.count += 1;
+      }
     }
 
     return Array.from(groups.values()).sort((a, b) => b.count - a.count);
   }, [totalData]);
 
-  const openDrillDown = useCallback((item, parentLevel, parentPath = {}) => { 
+  const openDrillDown = useCallback((item, parentLevel, parentPath = {}) => {
     const idx = LEVELS.indexOf(parentLevel);
     const isLeafNext = idx === LEVELS.length - 1;
-
     const nodePath = { ...parentPath, [parentLevel]: item.name };
 
     if (isLeafNext) {
-      // We're already at AREA → drill into devices
-      const rows = buildDrillRows(nodePath, 'device');
       setDialogTitle(`Devices – ${item.name}`);
-      setDialogRows(rows);
+      setDialogRows(buildDrillRows(nodePath, 'device'));
       setDialogLevel('device');
-      setDrillPath(nodePath);
-      setLeafMode(true);
     } else {
       const nextLevel = LEVELS[idx + 1];
-      const rows = buildDrillRows(nodePath, nextLevel);
       setDialogTitle(`${LEVEL_LABELS[nextLevel]} – ${item.name}`);
-      setDialogRows(rows);
+      setDialogRows(buildDrillRows(nodePath, nextLevel));
       setDialogLevel(nextLevel);
-      setDrillPath(nodePath);
-      setLeafMode(false);
     }
+    setDrillPath(nodePath);
     setDialogOpen(true);
   }, [buildDrillRows]);
 
@@ -348,69 +390,102 @@ export default function HealthRanking({ totalData = [], filters = {}, userAccess
     openDrillDown(item, levelKey, {});
   }, [levelKey, openDrillDown]);
 
-const handleDialogRowClick = useCallback((row) => {
-  if (dialogLevel === 'area') {
-    goToLiveMonitoring({ area: row.name });
-    setDialogOpen(false);
-    return;
-  }
-  if (dialogLevel === 'device') {
-    goToLiveMonitoring({ siteId: row.siteId, area: row.name });
-    setDialogOpen(false);
-    return;
-  }
-  openDrillDown(row, dialogLevel, drillPath);
-}, [dialogLevel, drillPath, openDrillDown, goToLiveMonitoring]);
+  const handleDialogRowClick = useCallback((row) => {
+    if (dialogLevel === 'area' || dialogLevel === 'device') {
+      goToLiveMonitoring({
+        siteId:       row.siteId,
+        area:         row.area || drillPath.area || row.name,
+        serialNumber: row.serialNumber,
+        state:        row.state,
+        zone:         row.zone || drillPath.zone,
+        circle:       row.circle || drillPath.circle,
+        division:     row.division || drillPath.division,
+      });
+      setDialogOpen(false);
+      return;
+    }
+    openDrillDown(row, dialogLevel, drillPath);
+  }, [dialogLevel, drillPath, openDrillDown, goToLiveMonitoring]);
 
-  // RENDER
   return (
     <>
       <Card
         variant="outlined"
         sx={{
           width: '100%',
+          height: '100%',
           bgcolor: 'background.paper',
           borderColor: 'divider',
           borderRadius: 2,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <CardContent
           sx={{
-            p: { xs: 1.5, lg: 0.5 },
-            '&:last-child': { pb: { lg: 1, xl: 2 } },
+            p: { xs: 1.25, lg: 1 },
+            '&:last-child': { pb: { xs: 1.25, lg: 1 } },
             display: 'flex',
             flexDirection: 'column',
-            minHeight: 0,
             flex: 1,
+            minHeight: 0,
+            overflow: 'hidden',
           }}
         >
           <Typography
             variant="subtitle1"
-            sx={{ color: 'text.primary', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.3px', mb: 0.5 }}
+            sx={{
+              color: 'text.primary',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              letterSpacing: '0.5px',
+              mb: 0.5,
+            }}
           >
-           PERFORMANCE — {levelLabel}
+            PERFORMANCE — {levelLabel}
           </Typography>
 
-          <Divider sx={{ mb: 0.5 }} />
+          <Divider sx={{ mb: 0.75 }} />
 
           {displayRows.length === 0 ? (
-            <Box sx={{ py: 2, textAlign: 'center' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>No data available</Typography>
+            <Box sx={{ py: 3, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                No data available
+              </Typography>
             </Box>
           ) : useGridLayout ? (
-            <Grid container spacing={0.5}>
-              {displayRows.map((item) => (
-                <Grid item xs={12} sm={6} md={6} lg={12} key={item.id}>
-                  <RankingCard item={item} onClick={() => handleCardOrRowClick(item)} />
-                </Grid>
-              ))}
-            </Grid>
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                pr: 0.5,
+                '&::-webkit-scrollbar': { width: 6 },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'divider', borderRadius: 3 },
+              }}
+            >
+              <Grid container spacing={0.75}>
+                {displayRows.map((item) => (
+                  <Grid item xs={12} sm={6} md={6} lg={12} key={item.id}>
+                    <RankingCard item={item} onClick={() => handleCardOrRowClick(item)} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           ) : (
-            <TableContainer sx={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
-              <Table sx={{ width: '100%', tableLayout: 'auto' }} size="small" stickyHeader>
+            <TableContainer
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                '&::-webkit-scrollbar': { width: 6 },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: 'divider', borderRadius: 3 },
+              }}
+            >
+              <Table stickyHeader sx={{ width: '100%', tableLayout: 'fixed' }} size="small">
                 <TableHead>
                   <TableRow
                     sx={{
@@ -418,24 +493,29 @@ const handleDialogRowClick = useCallback((row) => {
                         bgcolor: 'background.default',
                         color: 'text.primary',
                         fontWeight: 700,
-                        fontSize: '0.7rem',
+                        fontSize: '0.66rem',
                         textTransform: 'uppercase',
-                        py: 0.5,
-                        px: 1,
+                        letterSpacing: '0.4px',
+                        py: 0.6,
+                        px: 0.5,
                         borderColor: 'divider',
                         whiteSpace: 'nowrap',
                       },
                     }}
                   >
                     <TableCell>{levelLabel}</TableCell>
-                    <TableCell align="center">Overview</TableCell>
+                    <TableCell align="center">Performance</TableCell>
                     <TableCell align="center">Alarms</TableCell>
                     <TableCell align="center">Charger Trip</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {displayRows.map((item) => (
-                    <RankingTableRow key={item.id} item={item} onClick={() => handleCardOrRowClick(item)} />
+                    <RankingTableRow
+                      key={item.id}
+                      item={item}
+                      onClick={() => handleCardOrRowClick(item)}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -444,23 +524,35 @@ const handleDialogRowClick = useCallback((row) => {
         </CardContent>
       </Card>
 
-      {/* ---------- DRILL-DOWN DIALOG ---------- */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      {/* DRILL-DOWN DIALOG */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
         <DialogTitle
           sx={{
             background: 'linear-gradient(90deg, rgb(0, 212, 255) 0%, rgb(9, 9, 121) 35%, rgb(0, 212, 255) 100%)',
             color: 'white',
             textAlign: 'center',
+            fontWeight: 600,
+            fontSize: '1rem',
+            py: 1.5,
           }}
         >
           {dialogTitle}
         </DialogTitle>
 
-        <DialogContent sx={{ pt: 2 }}>
+        <DialogContent sx={{ pt: 2, pb: 1 }}>
           {dialogRows.length === 0 ? (
             <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>No data</Box>
           ) : (
-            <TableContainer component={Paper} sx={{ border: '0.5px solid #75767B', borderRadius: 2, maxHeight: 380 }}>
+            <TableContainer
+              component={Paper}
+              sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, maxHeight: 380 }}
+            >
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -478,7 +570,7 @@ const handleDialogRowClick = useCallback((row) => {
                     <TableRow
                       key={`${row.name}-${idx}`}
                       hover
-                      sx={{ cursor: 'pointer' }}
+                      sx={{ cursor: 'pointer', '&:last-child td': { borderBottom: 0 } }}
                       onClick={() => handleDialogRowClick(row)}
                     >
                       <TableCell
@@ -486,6 +578,7 @@ const handleDialogRowClick = useCallback((row) => {
                           textAlign: 'center',
                           color: '#1976d2',
                           textDecoration: dialogLevel === 'device' ? 'underline' : 'none',
+                          fontSize: '0.85rem',
                         }}
                       >
                         {row.name}
@@ -496,6 +589,7 @@ const handleDialogRowClick = useCallback((row) => {
                             textAlign: 'center',
                             color: '#1976d2',
                             textDecoration: 'underline',
+                            fontSize: '0.85rem',
                           }}
                         >
                           {row.siteId}
@@ -506,6 +600,7 @@ const handleDialogRowClick = useCallback((row) => {
                           textAlign: 'center',
                           color: row.count > 0 ? 'error.main' : 'text.secondary',
                           fontWeight: 600,
+                          fontSize: '0.85rem',
                         }}
                       >
                         {row.count ?? 0}
@@ -518,8 +613,8 @@ const handleDialogRowClick = useCallback((row) => {
           )}
         </DialogContent>
 
-        <DialogActions>
-          <Button variant="contained" color="error" onClick={() => setDialogOpen(false)}>
+        <DialogActions sx={{ px: 2.5, pb: 2 }}>
+          <Button variant="contained" color="error" onClick={() => setDialogOpen(false)} size="small">
             Close
           </Button>
         </DialogActions>

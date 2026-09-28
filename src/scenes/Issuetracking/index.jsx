@@ -82,11 +82,6 @@ useEffect(() => {
   setPage(0);
   setIsFiltered(false);
   last7daysTickets(0);
-  setState('')
-  setCircle('')
-  setZoneOptions([])
-  setCircleOptions([])
-  setSiteOptions([])
 },[])
   const resetAllState = () => {
     setState('');
@@ -105,17 +100,17 @@ useEffect(() => {
     resetAllState();
     last7daysTickets(0);
   };
-useEffect(() => {
-  return () => {
-    // Cleanup on unmount
-    setState("");
-    setCircle("");
-    setZone("");
-    setArea('')
-    setStartDate(null);
-    setEndDate(null);
-  };
-}, []);
+// useEffect(() => {
+//   return () => {
+//     // Cleanup on unmount
+//     setState("");
+//     setCircle("");
+//     setZone("");
+//     setArea('')
+//     setStartDate(null);
+//     setEndDate(null);
+//   };
+// }, []);
 const [openTooltipId, setOpenTooltipId] = useState(null);
 
 const handleClick = (siteId, serialNumber) => {

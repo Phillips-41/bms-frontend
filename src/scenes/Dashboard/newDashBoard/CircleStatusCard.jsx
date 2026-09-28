@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Card, CardContent, Typography, Box,
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper,
+  TableHead, TableRow, Paper, TablePagination,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { useSiteNavigation } from './dashboardUtils';
 
 const TABLE_CELL_STYLE = {
   color: 'black',
@@ -18,7 +19,13 @@ const TABLE_CELL_STYLE = {
   textAlign: 'center',
 };
 
-export const CircleStatusCard = ({ data }) => {
+// statusType from backend: 0 = non-communicating (red), 1 = communicating (green)
+const STATUS_TYPE = {
+  NON_COMMUNICATING: 1,
+  COMMUNICATING: 0,
+};
+
+export const CircleStatusCard = ({ data, mapMarkers = [] }) => {
   const {
     totalMonitoredSites = 0,
     communicating = 0,
@@ -27,72 +34,136 @@ export const CircleStatusCard = ({ data }) => {
     modemCommsUptime = '0%',
   } = data || {};
 
+  const { goToLiveMonitoring } = useSiteNavigation();
+
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogRows, setDialogRows] = useState([]);
-  const [dialogType, setDialogType] = useState(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Safe array of markers
+  const markers = useMemo(
+    () => (Array.isArray(mapMarkers) ? mapMarkers : []),
+    [mapMarkers]
+  );
+
+  // Build rows for a given statusType
+  const getRowsForStatus = useCallback(
+    (statusType) => {
+      return markers
+        .filter((m) => Number(m.statusType) === statusType)
+        .map((m, idx) => ({
+          id: `${m.siteId || 'site'}-${idx}`,
+          area: m.area || '--',
+          siteId: m.siteId || '--',
+          serialNumber: m.serialNumber,
+          zone: m.zone || '--',
+          circle: m.circle || '--',
+          subDivision: m.divison || m.division || '--', 
+          state: m.state,
+          statusType: m.statusType,
+          _raw: m,
+        }));
+    },
+    [markers]
+  );
+
+  const handleSliceClick = useCallback(
+    (entry) => {
+      // entry.name = "Communicating" | "Non-Communicating"
+      const isCommunicating = entry?.name === 'Communicating';
+      const statusType = isCommunicating
+        ? STATUS_TYPE.COMMUNICATING
+        : STATUS_TYPE.NON_COMMUNICATING;
+
+      const rows = getRowsForStatus(statusType);
+      setDialogTitle(
+        `${entry?.name || 'Sites'} — ${rows.length} site${rows.length === 1 ? '' : 's'}`
+      );
+      setDialogRows(rows);
+      setPage(0);
+      setDialogOpen(true);
+    },
+    [getRowsForStatus]
+  );
+
+  const handleRowClick = useCallback(
+    (row) => {
+      goToLiveMonitoring({
+        siteId: row.siteId || undefined,
+        area: row.area,
+        serialNumber: row.serialNumber || undefined,
+        state: row.state,
+        zone: row.zone,
+        circle: row.circle,
+        division: row.subDivision,
+      });
+      setDialogOpen(false);
+    },
+    [goToLiveMonitoring]
+  );
+
+  const handleChangePage = useCallback((event, newPage) => {
+    setPage(newPage);
+  }, []);
+
+  const handleChangeRowsPerPage = useCallback((event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  }, []);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return dialogRows.slice(start, start + rowsPerPage);
+  }, [dialogRows, page, rowsPerPage]);
 
   const pieData = [
     {
       name: 'Communicating',
       value: communicating,
       color: '#2ecc71',
-      type: 'communicating',
+      statusType: STATUS_TYPE.COMMUNICATING,
     },
     {
       name: 'Non-Communicating',
       value: non_communicating,
       color: '#ff4d4d',
-      type: 'non_communicating',
+      statusType: STATUS_TYPE.NON_COMMUNICATING,
     },
   ];
 
-  const deviceList = useMemo(
-    () => (Array.isArray(data?.device) ? data.device : []),
-    [data]
-  );
-
-  const getRowsForType = (type) => {
-    if (!deviceList.length) return [];
-
-    return deviceList
-      .filter((d) => {
-        const isNonComm = d.isNotCommunicating === true;
-        return type === 'non_communicating' ? isNonComm : !isNonComm;
-      })
-      .map((d, idx) => ({
-        id: d.siteId || d.serialNumber || `row-${idx}`,
-        name: d.area || d.name || d.siteId || '--',
-        siteId: d.siteId || '--',
-        serialNumber: d.serialNumber || '--',
-        vendor: d.vendorName || '--',
-        _raw: d,
-      }));
-  };
-
-  const handlePieClick = (entry) => {
-    const type = entry?.type || entry?.payload?.type;
-    if (!type) return;
-
-    const rows = getRowsForType(type);
-    const label = type === 'communicating' ? 'Communicating' : 'Non-Communicating';
-
-    setDialogType(type);
-    setDialogTitle(`${label} Sites — ${rows.length}`);
-    setDialogRows(rows);
-    setDialogOpen(true);
-  };
-
   return (
     <>
-      <Card variant="outlined" sx={{ height: '100%', width: '100%', bgcolor: 'background.paper', borderColor: 'divider', borderRadius: 2 }}>
+      <Card
+        variant="outlined"
+        sx={{
+          height: '100%',
+          width: '100%',
+          bgcolor: 'background.paper',
+          borderColor: 'divider',
+          borderRadius: 2,
+        }}
+      >
         <CardContent sx={{ p: { lg: 1.5, xl: 2 }, '&:last-child': { pb: { lg: 1 } } }}>
-          <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 700, mb: { lg: 1, xl: 1.5 } }}>
+          <Typography
+            variant="h6"
+            sx={{ color: 'text.primary', fontWeight: 700, mb: { lg: 1, xl: 1.5 } }}
+          >
             STATUS
           </Typography>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { lg: 3, xl: 2 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: { lg: 3, xl: 2 },
+            }}
+          >
             <Box>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 Total Monitored Sites
@@ -105,7 +176,7 @@ export const CircleStatusCard = ({ data }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                 <Typography
                   variant="caption"
-                  onClick={() => handlePieClick({ type: 'communicating' })}
+                  onClick={() => handleSliceClick({ name: 'Communicating' })}
                   sx={{
                     color: '#2ecc71',
                     fontSize: '1rem',
@@ -116,14 +187,17 @@ export const CircleStatusCard = ({ data }) => {
                 >
                   {communicating}
                 </Typography>
-                {/* Separator */}
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '1rem', fontWeight: 500 }}>
-                  /
-                </Typography>
-                {/* Non-Communicating - clickable */}
+
                 <Typography
                   variant="caption"
-                  onClick={() => handlePieClick({ type: 'non_communicating' })}
+                  sx={{ color: 'text.secondary', fontSize: '1rem', fontWeight: 500 }}
+                >
+                  /
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  onClick={() => handleSliceClick({ name: 'Non-Communicating' })}
                   sx={{
                     color: '#ff4d4d',
                     fontSize: '1rem',
@@ -151,14 +225,13 @@ export const CircleStatusCard = ({ data }) => {
                     dataKey="value"
                     startAngle={90}
                     endAngle={-270}
-                    onClick={(entry) => handlePieClick(entry)}
-                    style={{ cursor: 'pointer' }}
+                    onClick={(entry) => handleSliceClick(entry)}
                   >
                     {pieData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color}
-                        style={{ cursor: 'pointer', outline: 'none' }}
+                        style={{ cursor: 'pointer' }}
                       />
                     ))}
                   </Pie>
@@ -186,7 +259,14 @@ export const CircleStatusCard = ({ data }) => {
           </Box>
 
           {/* Active Alarms */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { lg: 1, xl: 2 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: { lg: 1, xl: 2 },
+            }}
+          >
             <Box>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 Active Alarms
@@ -200,25 +280,18 @@ export const CircleStatusCard = ({ data }) => {
         </CardContent>
       </Card>
 
-      {/* ---------- DRILL-DOWN DIALOG ---------- */}
+      {/* DRILL-DOWN DIALOG — same pattern as AlertHotspots */}
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 2.5, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' },
-        }}
+        maxWidth="lg"
       >
         <DialogTitle
           sx={{
             background:
-              dialogType === 'non_communicating'
-                ? 'linear-gradient(90deg, #ff4d4d 0%, #b71c1c 50%, #ff4d4d 100%)'
-                : 'linear-gradient(90deg, #2ecc71 0%, #1b5e20 50%, #2ecc71 100%)',
+              'linear-gradient(90deg, rgb(0, 212, 255) 0%, rgb(9, 9, 121) 35%, rgb(0, 212, 255) 100%)',
             color: 'white',
             textAlign: 'center',
-            fontWeight: 700,
           }}
         >
           {dialogTitle}
@@ -227,34 +300,70 @@ export const CircleStatusCard = ({ data }) => {
         <DialogContent sx={{ pt: 2 }}>
           {dialogRows.length === 0 ? (
             <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
-              No sites found
+              No sites found for this status
             </Box>
           ) : (
-            <TableContainer
-              component={Paper}
-              sx={{ border: '0.5px solid #75767B', borderRadius: 2, maxHeight: 420 }}
-            >
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={TABLE_CELL_STYLE}>Location</TableCell>
-                    <TableCell sx={TABLE_CELL_STYLE}>Substation ID</TableCell>
-                    <TableCell sx={TABLE_CELL_STYLE}>Serial Number</TableCell>
-                    <TableCell sx={TABLE_CELL_STYLE}>Vendor</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {dialogRows.map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={{ textAlign: 'center' }}>{row.name}</TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>{row.siteId}</TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>{row.serialNumber}</TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>{row.vendor}</TableCell>
+            <>
+              <TableContainer
+                component={Paper}
+                sx={{ border: '0.5px solid #75767B', borderRadius: 2, maxHeight: 400 }}
+              >
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={TABLE_CELL_STYLE}>Zone</TableCell>
+                      <TableCell sx={TABLE_CELL_STYLE}>Circle</TableCell>
+                      <TableCell sx={TABLE_CELL_STYLE}>Subdivision</TableCell>
+                      <TableCell sx={TABLE_CELL_STYLE}>Area</TableCell>
+                      <TableCell sx={TABLE_CELL_STYLE}>Device ID</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {paginatedRows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        hover
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => handleRowClick(row)}
+                      >
+                        <TableCell sx={{ textAlign: 'center' }}>{row.zone}</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>{row.circle}</TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>{row.subDivision}</TableCell>
+                        <TableCell
+                          sx={{
+                            textAlign: 'center',
+                            color: '#1976d2',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {row.area}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            textAlign: 'center',
+                            color: '#1976d2',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          {row.siteId}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <TablePagination
+                component="div"
+                count={dialogRows.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                sx={{ mt: 1 }}
+              />
+            </>
           )}
         </DialogContent>
 

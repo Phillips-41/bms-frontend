@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getUsername } from "../utils/ProtectedRoutes";
 
-const BASE_URL = "https://rbms.mahadiscom.in/mseb"; 
+const BASE_URL = "https://rbms.mahadiscom.in/mseb";  //https://rbms.mahadiscom.in/mseb
 // const BASE_URL = "https://rbms.mahadiscom.in/mseb";
 export const API_KEY = "AIzaSyCHaONrQ1KYNXbtSRFNNSWETwrQaJY_B0U"
 
@@ -998,12 +998,28 @@ export const fetchDeviceAlarms = async (params = {}) => {
 };
 
 
-export const fetchDashboardData = async () => {
+export const fetchDashboardData = async ({ signal, zone, circle, division, area } = {}) => {
   try {
-    const response = await apiClient.get("/api/dashboard");
+    const params = {};
+    if (zone)     params.zone        = zone;
+    if (circle)   params.circle      = circle;
+    if (division) params.subDivision = division;
+    if (area)     params.area        = area;
+
+    const response = await apiClient.get("/api/dashboard", { params, signal });
     return response.data;
   } catch (error) {
     console.error("Error in fetching dashboard data: ", error);
     throw error;
   }
 };
+
+// export const fetchDashboardData = async () => {
+//   try {
+//     const response = await apiClient.get("/api/dashboard");
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error in fetching dashboard data: ", error);
+//     throw error;
+//   }
+// };

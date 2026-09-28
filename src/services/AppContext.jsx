@@ -90,6 +90,10 @@ const [configMissingOpen, setConfigMissingOpen] = useState(false);
       }
     };
     fetchOptions();
+    userHasAccess();
+  }, [token]); // Depend on token instead of isAuthenticated
+
+  function userHasAccess() {
     const userAccess = getUserAccess();
     if(userAccess){
       handleStateChange(userAccess.state.value || "");
@@ -97,7 +101,7 @@ const [configMissingOpen, setConfigMissingOpen] = useState(false);
       handleCircleChange(userAccess.circle.value || "");
       handleDivisionChange(userAccess.division.value || "");
     }
-  }, [token]); // Depend on token instead of isAuthenticated
+  }
 
 
   useEffect(() => {
@@ -345,10 +349,14 @@ const handleSearch = async (overrides = {}) => {
     if (!value) return;
     setZone(value);
         setDeviceId('');
-    // setCircleOptions([]);
-    // setCircle('');
+    setCircleOptions([]);
+    setCircle('');
     setSiteOptions([]);
     setSiteIdOptions([]);
+    setDivision('');
+    setDivisionOptions([]);
+    setAreaOptions([]);
+    setArea('');
     try {
       const mapData = await fetchCircleNames(value);
       setCircleOptions(mapData);
@@ -362,12 +370,12 @@ const handleSearch = async (overrides = {}) => {
     if (!value) return;
     setCircle(value);
     setDeviceId('');
-    // setDivision('');
-    // setDivisionOptions([]);
+    setDivision('');
+    setDivisionOptions([]);
     setSiteOptions([]);
     setSiteIdOptions([]);
-    // setAreaOptions([]);
-    // setArea('');
+    setAreaOptions([]);
+    setArea('');
     try {
       const mapData = await fetchDivisionList(value);
       setDivisionOptions(mapData);
@@ -383,12 +391,13 @@ const handleSearch = async (overrides = {}) => {
     setDivision(value);
     setDeviceId('');
     setSiteOptions([]);
-    setSiteIdOptions([]);
-
+    // setSiteIdOptions([]);
+    setAreaOptions([]);
+    setArea('');
     try {
       const mapData = await fetchAreaList(value);
       setAreaOptions(mapData);
-      setSiteIdOptions(mapData.map((site) => site.siteId));
+      // setSiteIdOptions(mapData.map((site) => site.siteId));
     } catch (error) {
       console.error('Error fetching map data for circle:', error);
     }
@@ -494,6 +503,7 @@ const handleSearch = async (overrides = {}) => {
     setZone('');
     setDivision('');
     setArea('');
+    userHasAccess();
   };
   useEffect(() => {
     let intervalId;

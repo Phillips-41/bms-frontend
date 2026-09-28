@@ -924,59 +924,60 @@
 
 
 
+
+
+
 // DashBoardBar.jsx
-import { Box, TextField, Autocomplete, Tooltip, useTheme, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import { useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useContext } from "react";
+import {
+  Box, TextField, Autocomplete, Tooltip, useTheme,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button,
+} from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { AppContext } from "../../../services/AppContext";
 import {
-  fetchMapByState,
-  fetchMapByCircle,
-  fetchMapByArea,
-  fetchMapByZone,
-  fetchMapByDivision,
+  fetchZoneNames,
+  fetchCircleNames,
+  fetchDivisionList,
+  fetchAreaList,
 } from "../../../services/apiService";
-import clear from '../../../assets/images/png/brush.png';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { Button } from '@mui/material';
+import clear from "../../../assets/images/png/brush.png";
 import { tokens } from "../../../theme";
-import { getUsername } from "../../../utils/ProtectedRoutes";
 import { DEFAULT_STATE } from "../newDashBoard/dashboardUtils";
 
-const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
+const DashBoardBar = ({ filters = {}, onFilterChange }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { setSiteOptions } = useContext(AppContext);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const acc = userAccess || {};
-  const stateAcc    = acc.state    || { value: "", locked: false, options: [] };
-  const zoneAcc     = acc.zone     || { value: "", locked: false, options: [] };
-  const circleAcc   = acc.circle   || { value: "", locked: false, options: [] };
-  const divisionAcc = acc.division || { value: "", locked: false, options: [] };
-  const areaAcc     = acc.area     || { value: "", locked: false, options: [] };
+  const {
+    zone, setZone,
+    circle, setCircle,
+    division, setDivision,
+    area, setArea,
+    zoneOptions, setZoneOptions,
+    circleOptions, setCircleOptions,
+    divisionOptions, setDivisionOptions,
+    areaOptions, setAreaOptions,
+  } = useContext(AppContext);
 
-  // Local state
-  const [zoneOptions, setZoneOptions] = useState([]);
-  const [circleOptions, setCircleOptions] = useState([]);
-  const [divisionOptions, setDivisionOptions] = useState([]);
-  const [siteOptions, setLocalSiteOptions] = useState([]);
-  
-  // Selected values - initialize with user topics or empty
-  const [state, setState]       = useState(DEFAULT_STATE);
-  const [zone, setZone]         = useState(zoneAcc.value || "");
-  const [circle, setCircle]     = useState(circleAcc.value || "");
-  const [division, setDivision] = useState(divisionAcc.value || "");
-  const [area, setArea]         = useState(areaAcc.value || "");
-  
+  const stateAcc    = { value: "", locked: false, options: [] };
+  const zoneAcc     = { value: "", locked: false, options: [] };
+  const circleAcc   = { value: "", locked: false, options: [] };
+  const divisionAcc = { value: "", locked: false, options: [] };
+  const areaAcc     = { value: "", locked: false, options: [] };
+
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // SEED DROPDOWN OPTIONS FROM ACCESS
-    useEffect(() => {
-    if (zoneAcc.locked || zoneAcc.options.length > 0) {
-      setZoneOptions(zoneAcc.locked ? [zoneAcc.value] : zoneAcc.options);
+  // SEED FROM ACCESS (locked roles only — never overwrite user picks)
+  useEffect(() => {
+    if (zoneAcc.locked) {
+      setZoneOptions([zoneAcc.value]);
+      setZone(zoneAcc.value);
+    } else if (zoneAcc.options.length > 0 && zoneOptions.length === 0) {
+      setZoneOptions(zoneAcc.options);
     }
-    if (zoneAcc.locked) setZone(zoneAcc.value);
 
     if (circleAcc.locked) {
       setCircleOptions([circleAcc.value]);
@@ -987,6 +988,7 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
       setDivision(divisionAcc.value);
     }
     if (areaAcc.locked) {
+      setAreaOptions([areaAcc.value]);
       setArea(areaAcc.value);
     }
   }, [
@@ -996,32 +998,33 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
     areaAcc.locked, areaAcc.value,
   ]);
 
-   // LOAD ZONES
+  // DROPDOWN LOADERS — only seed from `filters` if context value is empty
   const loadZoneOptions = useCallback(async () => {
-    // If locked → already set from access; don't fetch
     if (zoneAcc.locked) {
       setZoneOptions([zoneAcc.value]);
       setZone(zoneAcc.value);
       return;
     }
-    // If access gives multiple allowed zones → use them, don't fetch all
     if (zoneAcc.options.length > 0) {
       setZoneOptions(zoneAcc.options);
       return;
     }
-    // free user → fetch normally
+    if (zoneOptions.length > 0) return; // already loaded this session
+
     try {
-      const token = sessionStorage.getItem("token");
-      const mapData = await fetchMapByState(DEFAULT_STATE, getUsername(token));
-      const zones = (mapData || []).map((s) => s.zone).filter(Boolean);
-      setZoneOptions([...new Set(zones)]);
-      if (filters.zone) setZone(filters.zone);
+      const zones = await fetchZoneNames(DEFAULT_STATE);
+      setZoneOptions(zones || []);
+      if (!zone && filters.zone) setZone(filters.zone);
     } catch (err) {
       console.error("Failed to load zones", err);
+      setErrorDialogOpen(true);
     }
-  }, [zoneAcc.locked, zoneAcc.value, zoneAcc.options, filters.zone]);
+  }, [
+    zoneAcc.locked, zoneAcc.value, zoneAcc.options,
+    zoneOptions.length, zone, filters.zone,
+    setZone, setZoneOptions,
+  ]);
 
-   // LOAD CIRCLES
   const loadCircleOptions = useCallback(
     async (zoneValue) => {
       if (circleAcc.locked) {
@@ -1038,20 +1041,25 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
         setCircle("");
         return;
       }
+      if (circleOptions.length > 0) return; // already loaded
+
       try {
-        const token = sessionStorage.getItem("token");
-        const mapData = await fetchMapByZone(zoneValue, getUsername(token));
-        const circles = (mapData || []).map((s) => s.circle).filter(Boolean);
-        setCircleOptions([...new Set(circles)]);
-        if (filters.circle) setCircle(filters.circle);
+        let circles = await fetchCircleNames(zoneValue);
+        circles = circles || [];
+        setCircleOptions(circles);
+        if (!circle && filters.circle) setCircle(filters.circle);
       } catch (err) {
         console.error("Failed to load circles", err);
+        setErrorDialogOpen(true);
       }
     },
-    [circleAcc.locked, circleAcc.value, circleAcc.options, filters.circle]
+    [
+      circleAcc.locked, circleAcc.value, circleAcc.options,
+      circleOptions.length, circle, filters.circle,
+      setCircle, setCircleOptions,
+    ]
   );
 
-  // LOAD DIVISIONS
   const loadDivisionOptions = useCallback(
     async (circleValue) => {
       if (divisionAcc.locked) {
@@ -1068,238 +1076,223 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
         setDivision("");
         return;
       }
+      if (divisionOptions.length > 0) return;
+
       try {
-        const mapData = await fetchMapByCircle(circleValue);
-        const divisions = (mapData || []).map((s) => s.divison).filter(Boolean);
-        setDivisionOptions([...new Set(divisions)]);
-        if (filters.division) setDivision(filters.division);
+        let divisions = await fetchDivisionList(circleValue);
+        divisions = divisions || [];
+        setDivisionOptions(divisions);
+        if (!division && filters.division) setDivision(filters.division);
       } catch (err) {
         console.error("Failed to load divisions", err);
+        setErrorDialogOpen(true);
       }
     },
-    [divisionAcc.locked, divisionAcc.value, divisionAcc.options, filters.division]
+    [
+      divisionAcc.locked, divisionAcc.value, divisionAcc.options,
+      divisionOptions.length, division, filters.division,
+      setDivision, setDivisionOptions,
+    ]
   );
 
-  // Load site options - only if user doesn't have specific area value
-  const loadSiteOptions = useCallback(
+  const loadAreaOptions = useCallback(
     async (divisionValue) => {
-      // area locked → fetch that specific area
       if (areaAcc.locked) {
-        try {
-          const mapData = await fetchMapByArea(areaAcc.value);
-          const list = Array.isArray(mapData) ? mapData : mapData ? [mapData] : [];
-          setLocalSiteOptions(list);
-          setSiteOptions?.(list);
-          setArea(areaAcc.value);
-
-          const markers = list
-            .filter((s) => s.latitude && s.longitude)
-            .map((s) => ({
-              lat: s.latitude,
-              lng: s.longitude,
-              name: s.area || "Unnamed site",
-              vendor: s.vendorName,
-              statusType: s.statusType,
-              siteId: s.siteId,
-              serialNumber: s.serialNumber || "N/A",
-            }));
-          onFilterChange?.("area", areaAcc.value, markers);
-        } catch (err) {
-          console.error("Error fetching locked area data:", err);
-        }
+        setAreaOptions([areaAcc.value]);
+        setArea(areaAcc.value);
         return;
       }
-
+      if (areaAcc.options.length > 0) {
+        setAreaOptions(areaAcc.options);
+        return;
+      }
       if (!divisionValue) {
-        setLocalSiteOptions([]);
-        setSiteOptions?.([]);
+        setAreaOptions([]);
         setArea("");
         return;
       }
+      if (areaOptions.length > 0) return;
 
       try {
-        const mapData = await fetchMapByDivision(divisionValue);
-        let list = mapData || [];
-
-        // If access restricts areas to specific ones → filter
-        if (areaAcc.options.length > 0) {
-          list = list.filter((s) => areaAcc.options.includes(s.area));
-        }
-
-        setLocalSiteOptions(list);
-        setSiteOptions?.(list);
-        if (filters.area) setArea(filters.area);
+        let areas = await fetchAreaList(divisionValue);
+        areas = areas || [];
+        setAreaOptions(areas);
+        if (!area && filters.area) setArea(filters.area);
       } catch (err) {
-        console.error("Failed to load sites", err);
+        console.error("Failed to load areas", err);
+        setErrorDialogOpen(true);
       }
     },
     [
       areaAcc.locked, areaAcc.value, areaAcc.options,
-      setSiteOptions, onFilterChange, filters.area,
+      areaOptions.length, area, filters.area,
+      setArea, setAreaOptions,
     ]
   );
 
-  // Initialize all filters based on user topics
+  // INITIAL LOAD / REHYDRATE — never clears persisted selections
   useEffect(() => {
-    const init = async () => {
+    const rehydrate = async () => {
       await loadZoneOptions();
 
-      const zoneValue = zoneAcc.locked
-        ? zoneAcc.value
-        : filters.zone || zone;
+      // Prefer locked value → context (persisted) → filters (parent)
+      const zoneValue =
+        (zoneAcc.locked ? zoneAcc.value : zone) || filters.zone || "";
+      if (zoneValue) {
+        await loadCircleOptions(zoneValue);
+      }
 
-      await loadCircleOptions(zoneValue);
+      const circleValue =
+        (circleAcc.locked ? circleAcc.value : circle) || filters.circle || "";
+      if (circleValue) {
+        await loadDivisionOptions(circleValue);
+      }
 
-      const circleValue = circleAcc.locked
-        ? circleAcc.value
-        : filters.circle || circle;
-
-      await loadDivisionOptions(circleValue);
-
-      const divisionValue = divisionAcc.locked
-        ? divisionAcc.value
-        : filters.division || division;
-
-      await loadSiteOptions(divisionValue);
-
-      setIsInitialized(true);
+      const divisionValue =
+        (divisionAcc.locked ? divisionAcc.value : division) ||
+        filters.division ||
+        "";
+      if (divisionValue) {
+        await loadAreaOptions(divisionValue);
+      }
     };
-    init();
+    rehydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clear all filters
-  const clearOptions = useCallback(async () => {
-    // locked fields stay locked; free fields reset
+  // CLEAR
+  const clearOptions = useCallback(() => {
     if (!zoneAcc.locked) {
       setZone("");
-      setCircleOptions([]);
-    }
-    if (!circleAcc.locked) {
       setCircle("");
-      setDivisionOptions([]);
-    }
-    if (!divisionAcc.locked) {
       setDivision("");
-      setLocalSiteOptions([]);
-      setSiteOptions?.([]);
-    }
-    if (!areaAcc.locked) {
       setArea("");
+      setCircleOptions([]);
+      setDivisionOptions([]);
+      setAreaOptions([]);
+    } else {
+      if (!circleAcc.locked) {
+        setCircle("");
+        setDivision("");
+        setArea("");
+        setDivisionOptions([]);
+        setAreaOptions([]);
+      }
+      if (!divisionAcc.locked) {
+        setDivision("");
+        setArea("");
+        setAreaOptions([]);
+      }
+      if (!areaAcc.locked) setArea("");
     }
     onFilterChange?.("clear");
   }, [
-    onFilterChange, setSiteOptions,
+    onFilterChange,
     zoneAcc.locked, circleAcc.locked, divisionAcc.locked, areaAcc.locked,
+    setZone, setCircle, setDivision, setArea,
+    setCircleOptions, setDivisionOptions, setAreaOptions,
   ]);
 
-   //  CHANGE HANDLERS 
+  // CHANGE HANDLERS — update context (persisted) + notify parent
   const handleZoneChange = useCallback(
     async (_e, newValue) => {
       if (zoneAcc.locked) return;
-      setCircleOptions([]);
-      setDivisionOptions([]);
-      setLocalSiteOptions([]);
+
+      setZone(newValue || "");
       setCircle("");
       setDivision("");
       setArea("");
-      setZone(newValue || "");
+      setCircleOptions([]);
+      setDivisionOptions([]);
+      setAreaOptions([]);
       onFilterChange?.("zone", newValue || "");
 
       if (!newValue) return;
       try {
-        const token = sessionStorage.getItem("token");
-        const mapData = await fetchMapByZone(newValue, getUsername(token));
-        let circles = (mapData || []).map((s) => s.circle).filter(Boolean);
+        let circles = await fetchCircleNames(newValue);
+        circles = circles || [];
         if (circleAcc.options.length > 0) {
           circles = circles.filter((c) => circleAcc.options.includes(c));
         }
-        setCircleOptions([...new Set(circles)]);
+        setCircleOptions(circles);
       } catch (err) {
         console.error("zone change failed", err);
+        setErrorDialogOpen(true);
       }
     },
-    [zoneAcc.locked, circleAcc.options, onFilterChange]
+    [
+      zoneAcc.locked, circleAcc.options, onFilterChange,
+      setZone, setCircle, setDivision, setArea,
+      setCircleOptions, setDivisionOptions, setAreaOptions,
+    ]
   );
 
   const handleCircleChange = useCallback(
     async (_e, newValue) => {
       if (circleAcc.locked) return;
-      setDivisionOptions([]);
-      setLocalSiteOptions([]);
+
+      setCircle(newValue || "");
       setDivision("");
       setArea("");
-      setCircle(newValue || "");
+      setDivisionOptions([]);
+      setAreaOptions([]);
       onFilterChange?.("circle", newValue || "");
 
       if (!newValue) return;
       try {
-        const mapData = await fetchMapByCircle(newValue);
-        let divisions = (mapData || []).map((s) => s.divison).filter(Boolean);
+        let divisions = await fetchDivisionList(newValue);
+        divisions = divisions || [];
         if (divisionAcc.options.length > 0) {
           divisions = divisions.filter((d) => divisionAcc.options.includes(d));
         }
-        setDivisionOptions([...new Set(divisions)]);
+        setDivisionOptions(divisions);
       } catch (err) {
         console.error("circle change failed", err);
+        setErrorDialogOpen(true);
       }
     },
-    [circleAcc.locked, divisionAcc.options, onFilterChange]
+    [
+      circleAcc.locked, divisionAcc.options, onFilterChange,
+      setCircle, setDivision, setArea,
+      setDivisionOptions, setAreaOptions,
+    ]
   );
 
   const handleDivisionChange = useCallback(
     async (_e, newValue) => {
       if (divisionAcc.locked) return;
-      setLocalSiteOptions([]);
-      setArea("");
+
       setDivision(newValue || "");
+      setArea("");
+      setAreaOptions([]);
       onFilterChange?.("division", newValue || "");
 
-      if (!newValue) {
-        setSiteOptions?.([]);
-        return;
-      }
+      if (!newValue) return;
       try {
-        const mapData = await fetchMapByDivision(newValue);
-        let list = mapData || [];
-        if (areaAcc.options.length > 0) {
-          list = list.filter((s) => areaAcc.options.includes(s.area));
-        }
-        setLocalSiteOptions(list);
-        setSiteOptions?.(list);
+        let areas = await fetchAreaList(newValue);
+        areas = areas || [];
+        setAreaOptions(areas);
       } catch (err) {
         console.error("division change failed", err);
+        setErrorDialogOpen(true);
       }
     },
-    [divisionAcc.locked, areaAcc.options, onFilterChange, setSiteOptions]
+    [
+      divisionAcc.locked, onFilterChange,
+      setDivision, setArea, setAreaOptions,
+    ]
   );
 
   const handleAreaChange = useCallback(
-    async (_e, newValue) => {
+    (_e, newValue) => {
       if (areaAcc.locked) return;
       setArea(newValue || "");
       onFilterChange?.("area", newValue || "");
-      if (!newValue) return;
-
-      const selectedSite = siteOptions.find((s) => s.area === newValue);
-      if (selectedSite?.latitude && selectedSite?.longitude) {
-        onFilterChange?.("area", newValue, [
-          {
-            lat: selectedSite.latitude,
-            lng: selectedSite.longitude,
-            name: selectedSite.area || "Unnamed site",
-            vendor: selectedSite.vendorName,
-            statusType: selectedSite.statusType,
-            siteId: selectedSite.siteId,
-            serialNumber: selectedSite.serialNumber || "N/A",
-          },
-        ]);
-      }
     },
-    [areaAcc.locked, onFilterChange, siteOptions]
+    [areaAcc.locked, onFilterChange, setArea]
   );
 
-
+  // RENDER HELPERS
   const renderHighlightedOption = useCallback((props, option, value) => {
     const { key, ...otherProps } = props;
     const label =
@@ -1317,8 +1310,7 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
         style={{
           backgroundColor: isSelected ? "#d82b27" : "inherit",
           color: isSelected ? "#ffffff" : "inherit",
-        }}
-      >
+        }}>
         {label}
       </li>
     );
@@ -1366,17 +1358,6 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
     [colors]
   );
 
-  const areaOptions = useMemo(() => {
-    if (!siteOptions || siteOptions.length === 0) {
-      return areaAcc.options.length > 0 ? areaAcc.options : [];
-    }
-    let areas = siteOptions.map((s) => s.area).filter(Boolean);
-    if (areaAcc.options.length > 0) {
-      areas = areas.filter((a) => areaAcc.options.includes(a));
-    }
-    return [...new Set(areas)];
-  }, [siteOptions, areaAcc.options]);
-
   return (
     <Box
       display="grid"
@@ -1401,7 +1382,7 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
           value={stateAcc.locked ? stateAcc.value : DEFAULT_STATE}
           disabled
           disableClearable
-          renderOption={(p, o) => renderHighlightedOption(p, o, state)}
+          renderOption={(p, o) => renderHighlightedOption(p, o, DEFAULT_STATE)}
           renderInput={(params) => (
             <TextField {...params} placeholder="State" sx={autocompleteStyles.input} />
           )}
@@ -1468,7 +1449,7 @@ const DashBoardBar = ({ filters = {}, onFilterChange, userAccess }) => {
           sx={autocompleteStyles.root}
         />
 
-        {/* CLEAR BUTTON */}
+        {/* CLEAR */}
         <Button
           color="error"
           onClick={clearOptions}

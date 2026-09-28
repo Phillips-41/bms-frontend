@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -58,7 +58,14 @@ export const SitesNeedAttention = ({ substations = [] }) => {
   const remainingCount = Math.max(0, data.length - DASHBOARD_LIMIT);
 
  const handleSubstationClick = (substation) => {
-    goToLiveMonitoring({ area: substation.name || substation.site });
+    goToLiveMonitoring({
+      area: substation.name,
+      division: substation.subDivision,
+      circle: substation.circle,
+      zone: substation.zone,
+      serialNumber: substation.serialNumber || undefined,
+      siteId: substation.siteId || undefined, 
+    });
   };
 
   const getSOCColor = (soc) => {
@@ -71,6 +78,7 @@ export const SitesNeedAttention = ({ substations = [] }) => {
     <SubstationCard
       onClick={() => handleSubstationClick(substation)}
       sx={isDialog ? { p: 1.5 } : {}}
+      title="Open live monitoring"
     >
       <Typography
         variant="body2"
@@ -99,32 +107,6 @@ export const SitesNeedAttention = ({ substations = [] }) => {
               mb: 0.5,
             }}
           >
-            VOLTAGE
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontSize: isDialog ? '1.1rem' : '1rem',
-              lineHeight: 1,
-            }}
-          >
-            {substation.voltage ? `${substation.voltage}` : 'N/A'}
-          </Typography>
-        </MetricItem>
-
-        <MetricItem>
-          <Typography
-            variant="caption"
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 600,
-              fontSize: isDialog ? '0.7rem' : '0.6rem',
-              textTransform: 'uppercase',
-              mb: 0.5,
-            }}
-          >
             SOC
           </Typography>
           <Typography
@@ -136,11 +118,10 @@ export const SitesNeedAttention = ({ substations = [] }) => {
               lineHeight: 1,
             }}
           >
-            {substation.soc != null ? `${substation.soc}%` : 'N/A'}
+            {substation.soc != null ? `${substation.soc}%` : 0}
           </Typography>
         </MetricItem>
-
-        <MetricItem>
+         <MetricItem>
           <Typography
             variant="caption"
             sx={{
@@ -151,7 +132,7 @@ export const SitesNeedAttention = ({ substations = [] }) => {
               mb: 0.5,
             }}
           >
-            Temp
+            CURRENT
           </Typography>
           <Typography
             variant="h6"
@@ -162,7 +143,7 @@ export const SitesNeedAttention = ({ substations = [] }) => {
               lineHeight: 1,
             }}
           >
-            {substation.batteryTemp != null ? `${substation.batteryTemp}°C` : 'N/A'}
+            {substation.current ? `${substation.current}A` : 0}
           </Typography>
         </MetricItem>
       </Box>
@@ -215,7 +196,7 @@ export const SitesNeedAttention = ({ substations = [] }) => {
             {hasData && remainingCount > 0 && (
               <Button
                 size="small"
-                variant="text"
+                variant="outlined"
                 color="primary"
                 onClick={() => setOpenDialog(true)}
                 sx={{

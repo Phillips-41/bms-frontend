@@ -8,12 +8,10 @@ import Logo from "../../assets/images/png/vajra.png";
 import MahaLogo from "../../assets/images/png/maha.png";
 import LocationSetupDialog from "../LocationSetup/LocationSetupDialog";
 
-
 const LoginPage = () => {
 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const [validationMessages, setValidationMessages] = useState([]);
   
   const { token, setToken, setUserRole, username, setUsername } = useContext(AppContext);
@@ -27,12 +25,6 @@ const LoginPage = () => {
   // Location setup for new LDAP users
   const [showLocationSetup, setShowLocationSetup] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
-
-
-
-
-
-
 
 
   const fetchLoginDetails = async (username, password) => {
@@ -89,7 +81,6 @@ const LoginPage = () => {
       setValidationMessages([errorMessage]);
     }
   };
-
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 

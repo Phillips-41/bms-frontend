@@ -34,7 +34,15 @@ export const PendingInstallations = ({ installations = [] }) => {
 
   // Navigate to Live Monitoring
   const handleViewDetails = (item) => {
-  goToLiveMonitoring({ siteId: item.siteId, area: item.area, serialNumber: item.serialNumber });
+  goToLiveMonitoring({ 
+    siteId: item.siteId || undefined, 
+    area: item.area,
+    serialNumber: item.serialNumber || undefined,
+    state: item.state,
+    zone: item.zone,
+    circle: item.circle,
+    division: item.subDivision,
+  });
 };
 
   // Reusable timeline list renderer

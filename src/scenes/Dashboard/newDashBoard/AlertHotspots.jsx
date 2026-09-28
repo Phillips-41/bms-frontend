@@ -93,7 +93,15 @@ export const AlertHotspots = ({ alerts = [], siteNeedAttentionList = [] }) => {
   }, [getRowsForAlert]);
 
   const handleRowClick = useCallback((row) => {
-    goToLiveMonitoring({ siteId: row.siteId, area: row.area });
+    goToLiveMonitoring({ 
+      siteId: row.siteId || undefined, 
+      area: row.area,
+      serialNumber: row.serialNumber || undefined,
+      state: row.state,
+      zone: row.zone,
+      circle: row.circle,
+      division: row.subDivision,
+    });
     setDialogOpen(false);
   }, [goToLiveMonitoring]);
 

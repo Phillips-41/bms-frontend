@@ -722,78 +722,245 @@
 
 
 
-import { useState, useEffect, useMemo } from "react";
+// import { useState, useEffect, useMemo, useCallback, useContext } from "react";
+// import "leaflet/dist/leaflet.css";
+// import { fetchLatestData, fetchDashboardData } from "../../services/apiService";
+// import { DEFAULT_STATE } from "./newDashBoard/dashboardUtils";
+// import { AppContext } from "../../services/AppContext";
+// import NewDashboard from "./newDashBoard/NewDashboard";
+
+// const Dashboard = () => {
+//   const [totalData, setTotalData]         = useState([]);
+//   const [dashboardData, setDashboardData] = useState(null);
+//   const [loading, setLoading]             = useState(true);
+//   const [error, setError]                 = useState(null);
+//   const [mapMarkers, setMapMarkers] = useState([]);
+//   const [communicationData, setCommunicationData] = useState({
+//     communicating: 0,
+//     nonCommunicating: 0,
+//     device: [],
+//   });
+
+//    const {
+//     zone, circle, division, area,
+//     setZone, setCircle, setDivision, setArea,
+//   } = useContext(AppContext);
+
+//    const filters = useMemo(
+//     () => ({
+//       state:    DEFAULT_STATE,
+//       zone:     zone     || "",
+//       circle:   circle   || "",
+//       division: division || "",
+//       area:     area     || "",
+//     }),
+//     [zone, circle, division, area]
+//   );
+
+//   useEffect(() => {
+//     const controller = new AbortController();
+//     let mounted = true;
+
+//     (async () => {
+//       setLoading(true);
+//       setError(null);
+//       try {
+//         const response = await fetchLatestData({ signal: controller.signal });
+//         if (!mounted) return;
+
+//         const list = Array.isArray(response) ? response : [];
+//         const comm = list.filter((i) => i.isNotCommunicating === false).length;
+
+//         setTotalData(list);
+//         setCommunicationData({
+//           device: comm,
+//         });
+//       } catch (err) {
+//         if (err?.name === "AbortError") return;
+//         console.error("Error fetching devices:", err);
+//         if (mounted) setError(err);
+//       } finally {
+//         if (mounted) setLoading(false);
+//       }
+//     })();
+
+//     return () => {
+//       mounted = false;
+//       controller.abort();
+//     };
+//   }, []);
+
+//   // Dashboard data
+//   useEffect(() => {
+//     const controller = new AbortController();
+//     let mounted = true;
+
+//     (async () => {
+//       try {
+//         const data = await fetchDashboardData({
+//           signal:   controller.signal,
+//           zone:     zone || "",
+//           circle:   circle || "",
+//           division: division ||  "",
+//           area:     area || "",
+//         });
+//         if (mounted) setDashboardData(data || null);
+//       } catch (err) {
+//         if (err?.name === "AbortError") return;
+//         console.error("Error fetching dashboard data:", err);
+//       }
+//     })();
+
+//     return () => {
+//       mounted = false;
+//       controller.abort();
+//     };
+//   }, [zone, circle, division, area]);
+
+//   const updateMapMarkers = useCallback((totalData) => {
+//     if (!totalData || !Array.isArray(data)) {
+//       setMapMarkers([]);
+//       return;
+//     }
+
+//     const markers = totalData
+//       .filter(item => item.latitude && item.longitude)
+//       .map(item => ({
+//         lat: item.latitude,
+//         lng: item.longitude,
+//         name: item.area,
+//         vendor: item.vendorName || "",
+//         statusType: item.isNotCommunicating === false ? 1 : 0,
+//         siteId: item.siteId,
+//         serialNumber: item.serialNumber,
+//       }));
+
+//     setMapMarkers(markers);
+//   }, []);
+
+//  const handleFilterChange = useCallback(
+//     (key, value) => {
+//       if (key === "clear") {
+//         setZone("");
+//         setCircle("");
+//         setDivision("");
+//         setArea("");
+//         return;
+//       }
+//       switch (key) {
+//         case "zone":     setZone(value);     setCircle(""); setDivision(""); setArea(""); break;
+//         case "circle":   setCircle(value);   setDivision(""); setArea("");            break;
+//         case "division": setDivision(value); setArea("");                              break;
+//         case "area":     setArea(value);                                              break;
+//         default: break;
+//       }
+//     },
+//     [setZone, setCircle, setDivision, setArea]
+//   );
+
+//   return (
+//     <NewDashboard
+//       totalData={totalData}
+//       device={communicationData.device}
+//       filters={filters}
+//       onFilterChange={handleFilterChange}
+//       dashboardData={dashboardData}
+//       marks={updateMapMarkers}
+//       loading={loading}
+//       error={error}
+//     />
+//   );
+// };
+
+// export default Dashboard;
+
+
+
+
+import { useState, useEffect, useMemo, useCallback, useContext } from "react";
 import "leaflet/dist/leaflet.css";
-import { fetchLatestData, fetchDashboardData } from "../../services/apiService";
-import { getUserAccess } from "../../utils/ProtectedRoutes";
+import { fetchDashboardData } from "../../services/apiService";
 import { DEFAULT_STATE } from "./newDashBoard/dashboardUtils";
+import { AppContext } from "../../services/AppContext";
 import NewDashboard from "./newDashBoard/NewDashboard";
 
 const Dashboard = () => {
-  const [totalData, setTotalData] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [communicationData, setCommunicationData] = useState({
-    communicating: 0,
-    nonCommunicating: 0,
-    device: [],
-  });
 
-  const userAccess = useMemo(() => getUserAccess(), []);
+  const {
+    zone, circle, division, area,
+    setZone, setCircle, setDivision, setArea,
+  } = useContext(AppContext);
 
-  const defaultFilters = useMemo(
+  const filters = useMemo(
     () => ({
-      state: userAccess?.defaultState || DEFAULT_STATE,
-      zone: userAccess?.defaultZone || "",
-      circle: userAccess?.defaultCircle || "",
-      division: userAccess?.defaultDivision || "",
-      area: userAccess?.defaultArea || "",
+      state: DEFAULT_STATE,
+      zone: zone || "",
+      circle: circle || "",
+      division: division || "",
+      area: area || "",
     }),
-    [userAccess]
+    [zone, circle, division, area]
   );
-useEffect(() => {
-  const controller = new AbortController();
-  let mounted = true;
 
-  (async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [response, dashboardResponse] = await Promise.all([
-        fetchLatestData({ signal: controller.signal }),
-        fetchDashboardData({ signal: controller.signal }),
-      ]);
-      if (!mounted) return;
-      const list = Array.isArray(response) ? response : [];
-        const comm = list.filter((i) => i.isNotCommunicating === false).length;
+  useEffect(() => {
+    const controller = new AbortController();
+    let mounted = true;
 
-        setTotalData(list);
-        setDashboardData(dashboardResponse || null);
-        setCommunicationData({ communicating: comm, nonCommunicating: list.length - comm, device: list, });
-    } catch (err) {
-      if (err?.name === "CanceledError" || err?.name === "AbortError" || err?.code === "ERR_CANCELED") {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchDashboardData({
+          signal: controller.signal,
+          zone: zone || "",
+          circle: circle || "",
+          division: division || "",
+          area: area || "",
+        });
+        if (mounted) setDashboardData(data || null);
+      } catch (err) {
+        if (err?.name === "AbortError") return;
+        console.error("Error fetching dashboard data:", err);
+        if (mounted) setError(err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
+  }, [zone, circle, division, area]);
+
+  const handleFilterChange = useCallback(
+    (key, value) => {
+      if (key === "clear") {
+        setZone("");
+        setCircle("");
+        setDivision("");
+        setArea("");
         return;
       }
-      if (mounted) setError(err);
-    } finally {
-      if (mounted) setLoading(false);
-    }
-  })();
-
-  return () => {
-    mounted = false;
-    controller.abort();
-  };
-}, []);
+      switch (key) {
+        case "zone":     setZone(value);     setCircle(""); setDivision(""); setArea(""); break;
+        case "circle":   setCircle(value);   setDivision(""); setArea("");            break;
+        case "division": setDivision(value); setArea("");                              break;
+        case "area":     setArea(value);                                              break;
+        default: break;
+      }
+    },
+    [setZone, setCircle, setDivision, setArea]
+  );
 
   return (
     <NewDashboard
-      totalData={totalData}
-      device={communicationData.device}
-      userAccess={userAccess}
-      defaultFilters={defaultFilters}
       dashboardData={dashboardData}
+      filters={filters}
+      onFilterChange={handleFilterChange}
       loading={loading}
       error={error}
     />
@@ -801,7 +968,3 @@ useEffect(() => {
 };
 
 export default Dashboard;
-
-// https://rbms.mahadiscom.in/mseb
-// http://192.168.1.51:51270
-// https://rbms.mahadiscom.in/mseb

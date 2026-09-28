@@ -77,7 +77,10 @@ function App() {
         </AppProvider>
       ),
     },
-  ]);
+  ],
+  {
+    basename: "/",   // ← add this
+  });
 
   return (
     <ColorModeContext.Provider value={colorMode}>

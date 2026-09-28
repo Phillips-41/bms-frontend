@@ -15,13 +15,12 @@ import { tokens } from "../../../../theme";
 import "./Header.css";
 import clear from '../../../../assets/assets/images/png/brush.png';
 import { AppContext } from "../../../../services/AppContext";
-import { getUserAccess } from "../../../../utils/ProtectedRoutes";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions,
+  DialogActions,InputLabel
 } from "@mui/material";
 const infoBoxHeight = { xs: '1.625rem', sm: '1.75rem', md: '1.875rem', lg: '1.875rem', xl: '1.875rem' };
 
@@ -91,6 +90,7 @@ const handleCheckboxChange = () => {
       <Paper component="header" className="top-header" elevation={0}>
         <Box className="filter-row">
           <FormControl size="small" sx={{ minWidth: 100 }}>
+             <InputLabel id="state-select-label" sx={{ fontSize: 12 }}>State</InputLabel>
             <Select
               value={state}
               onChange={(e) => handleStateChange(e.target.value)}
@@ -108,6 +108,7 @@ const handleCheckboxChange = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 90 }} disabled={!zoneOptions.length}>
+             <InputLabel id="state-select-label" sx={{ fontSize: 12 }}>Zone</InputLabel>
             <Select
               value={zone}
               onChange={(e) => handleZoneChange(e.target.value)}
@@ -125,6 +126,7 @@ const handleCheckboxChange = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 90 }} disabled={!circleOptions.length}>
+             <InputLabel id="state-select-label" sx={{ fontSize: 12 }}>Circle</InputLabel>
             <Select
               value={circle}
               onChange={(e) => handleCircleChange(e.target.value)}
@@ -142,6 +144,7 @@ const handleCheckboxChange = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 110 }} disabled={!divisionOptions.length}>
+             <InputLabel id="state-select-label" sx={{ fontSize: 12 }}>Sub-division</InputLabel>
             <Select
               value={division}
               onChange={(e) => handleDivisionChange(e.target.value)}
@@ -159,6 +162,7 @@ const handleCheckboxChange = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 130 }} disabled={!areaOptions.length}>
+            <InputLabel id="state-select-label" sx={{ fontSize: 12 }}>Substation</InputLabel>
             <Select
               value={area}
               onChange={(e) => handleAreaChange(e.target.value)}

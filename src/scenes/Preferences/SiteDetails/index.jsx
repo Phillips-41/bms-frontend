@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import axios from "axios";
 import {fetchStatesDetails, fetchCirclesDetails, fetchAreasDetails, fetchSiteDetailsBatteryandChargerdetails, updateSiteLocation, addSiteLocation, deleteSite, fetchAllSiteIds, fetchCircleNames, fetchAreaNames, fetchAllCircles, fetchAllZones, fetchAllDivisions } from '../../../services/apiService';
@@ -145,8 +144,8 @@ const [selectedArea, setSelectedArea] = useState('' );
   const {
     siteOptions,
     serialNumberOptions,
-    siteId,
-    serialNumber,
+    siteId='',
+    serialNumber='',
     setSiteId,
     setSerialNumber,
     setSiteIdOptions
