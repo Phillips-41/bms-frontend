@@ -60,3 +60,61 @@
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
+
+/* tablet */
+@media (max-width: 899px) {
+  .charger-card .section-heading {
+    margin-bottom: 6px;
+  }
+  .charger-state {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .charger-grid > div {
+    padding: 4px 8px;
+  }
+  .charger-grid span {
+    font-size: 10px;
+  }
+  .charger-grid strong {
+    font-size: 14px;
+    margin-top: 3px;
+  }
+}
+
+/* mobile — 2x2 grid for readability */
+@media (max-width: 599px) {
+  .charger-card .section-heading {
+    margin-bottom: 8px;
+  }
+  .charger-state {
+    font-size: 12px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  .charger-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 0;
+  }
+  .charger-grid > div {
+    padding: 8px 10px;
+    border-right: none;
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  }
+  .charger-grid > div:nth-child(odd) {
+    border-right: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  }
+  .charger-grid > div:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+  .charger-grid > div:last-child {
+    border: 0;
+  }
+  .charger-grid span {
+    font-size: 11px;
+  }
+  .charger-grid strong {
+    font-size: 16px;
+    margin-top: 4px;
+  }
+}

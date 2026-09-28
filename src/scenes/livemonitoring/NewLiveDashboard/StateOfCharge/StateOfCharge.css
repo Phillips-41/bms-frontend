@@ -30,3 +30,39 @@
 .soc-footer b {
   color: var(--foreground);
 }
+
+/* tablet */
+@media (max-width: 899px) {
+  .soc-value {
+    font-size: 24px;
+  }
+  .soc-value span {
+    font-size: 13px;
+  }
+  .progress-track {
+    height: 7px;
+    margin-top: 8px;
+  }
+  .soc-footer {
+    margin-top: 6px;
+    font-size: 11px;
+  }
+}
+
+/* mobile */
+@media (max-width: 599px) {
+  .soc-value {
+    font-size: 28px;
+  }
+  .soc-value span {
+    font-size: 14px;
+  }
+  .progress-track {
+    height: 8px;
+    margin-top: 10px;
+  }
+  .soc-footer {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+}

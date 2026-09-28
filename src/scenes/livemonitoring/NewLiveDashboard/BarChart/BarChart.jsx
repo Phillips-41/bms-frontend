@@ -1,8 +1,7 @@
-
 import { Box } from "@mui/material";
 import Tooltip from "@mui/material/Tooltip";
 import Surface from "../common/Surface/Surface";
-import SectionTitle from "../common/SectionTitle/SectionTitle"; 
+import SectionTitle from "../common/SectionTitle/SectionTitle";
 
 export function BarChart({ title, bars }) {
   return (
@@ -12,27 +11,28 @@ export function BarChart({ title, bars }) {
         sx={{
           position: "relative",
           display: "flex",
-          minHeight: 0,
+          minHeight: { xs: 120, sm: 0, md: 0 },
           flex: 1,
           alignItems: "flex-end",
           justifyContent: "space-around",
-          gap: "8px",
-          px: "6%",
-          pt: "6px",
+          gap: { xs: "12px", sm: "8px", md: "8px" },
+          px: { xs: "4%", sm: "6%", md: "6%" },
+          pt: { xs: "10px", sm: "6px", md: "6px" },
           borderBottom: "1px solid var(--border)",
-          overflow: "hidden",
+          overflow: { xs: "visible", sm: "hidden" },
         }}
       >
         <Box
           sx={{
             position: "absolute",
-            inset: "6px 0 12px",
+            inset: { xs: "10px 0 16px", sm: "6px 0 12px", md: "6px 0 12px" },
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
             pointerEvents: "none",
             "& i": {
-              borderTop: "1px dashed color-mix(in oklab, var(--border) 65%, transparent)",
+              borderTop:
+                "1px dashed color-mix(in oklab, var(--border) 65%, transparent)",
             },
           }}
         >
@@ -53,18 +53,18 @@ export function BarChart({ title, bars }) {
               flexDirection: "column",
               justifyContent: "flex-end",
               "& b": {
-                mt: "3px",
+                mt: { xs: "4px", sm: "3px", md: "3px" },
                 color: "var(--muted-foreground)",
-                fontSize: "10px",
+                fontSize: { xs: "12px", sm: "11px", md: "10px" },
               },
             }}
           >
             <Box
               component="span"
               sx={{
-                mb: "3px",
+                mb: { xs: "4px", sm: "3px", md: "3px" },
                 color: "var(--foreground)",
-                fontSize: "10px",
+                fontSize: { xs: "12px", sm: "11px", md: "10px" },
                 fontWeight: 700,
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -76,7 +76,11 @@ export function BarChart({ title, bars }) {
                 tabIndex={0}
                 sx={{
                   position: "relative",
-                  width: "min(44px, 75%)",
+                  width: {
+                    xs: "min(56px, 80%)",
+                    sm: "min(48px, 75%)",
+                    md: "min(44px, 75%)",
+                  },
                   minHeight: "4px",
                   height: `${bar.height}%`,
                   borderRadius: "3px 3px 0 0",

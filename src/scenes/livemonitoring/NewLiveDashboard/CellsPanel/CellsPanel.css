@@ -55,11 +55,6 @@
   overflow: hidden;
 }
 
-/*
- * One row = CSS grid with fixed tracks:
- * ID | voltage | temp | status chip
- * minmax(0, …) prevents content from blowing the column width.
- */
 .cell-row {
   display: grid;
   grid-template-columns: 28px minmax(0, 1.2fr) 28px minmax(0, 0.9fr);
@@ -180,4 +175,93 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* tablet */
+@media (max-width: 899px) {
+  .cells-header {
+    padding: 8px 10px 6px;
+  }
+  .cells-header h2 {
+    font-size: 12px;
+  }
+  .cells-header p {
+    font-size: 10px;
+  }
+  .healthy-tag {
+    font-size: 10px;
+    padding: 3px 7px;
+  }
+  .cells-list {
+    gap: 3px;
+    padding: 4px 6px;
+  }
+  .cell-id {
+    font-size: 11px;
+  }
+  .cell-v {
+    font-size: 12px;
+  }
+  .cell-t {
+    font-size: 11px;
+  }
+  .cell-status-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+}
+
+/* mobile — list scrolls naturally with page */
+@media (max-width: 599px) {
+  .cells-panel {
+    height: auto;
+    min-height: 320px;
+    overflow: visible;
+  }
+  .cells-header {
+    padding: 10px 12px 8px;
+  }
+  .cells-header h2 {
+    font-size: 13px;
+  }
+  .cells-header p {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .healthy-tag {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .cells-list {
+    grid-template-rows: none;
+    grid-auto-rows: minmax(36px, auto);
+    gap: 4px;
+    padding: 6px 8px;
+    overflow: visible;
+    flex: none;
+  }
+  .cell-row {
+    height: auto;
+    min-height: 36px;
+    padding: 6px 8px;
+    grid-template-columns: 32px minmax(0, 1.2fr) 36px minmax(0, 1fr);
+    column-gap: 6px;
+  }
+  .cell-id {
+    font-size: 12px;
+  }
+  .cell-v {
+    font-size: 13px;
+  }
+  .cell-t {
+    font-size: 12px;
+  }
+  .cell-status-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  .cells-footer {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
 }

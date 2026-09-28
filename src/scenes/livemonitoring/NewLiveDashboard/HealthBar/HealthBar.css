@@ -1,4 +1,4 @@
-/* Compact horizontal system-health strip. Visual + flex layout for items. */
+/* Compact horizontal system-health strip. */
 .health-bar {
   min-height: 32px;
   flex-shrink: 0;
@@ -76,7 +76,71 @@
   gap: 5px;
 }
 
-@media (max-width: 1100px) {
+/* tablet */
+@media (max-width: 899px) {
+  .health-bar {
+    min-height: 36px;
+    overflow-x: auto;
+  }
+  .health-lead {
+    min-width: 150px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .health-lead strong {
+    font-size: 11px;
+  }
+  .health-lead div span {
+    font-size: 10px;
+  }
+  .health-item {
+    min-width: 100px;
+    padding: 4px 10px;
+  }
+  .health-item span {
+    font-size: 9px;
+  }
+  .health-item strong {
+    font-size: 12px;
+  }
+  .health-links {
+    display: none;
+  }
+}
+
+/* mobile */
+@media (max-width: 599px) {
+  .health-bar {
+    min-height: auto;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .health-lead {
+    min-width: 0;
+    flex: 1 1 100%;
+    padding: 8px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .health-lead strong {
+    font-size: 12px;
+  }
+  .health-lead div span {
+    font-size: 11px;
+  }
+  .health-item {
+    min-width: 0;
+    flex: 1 1 40%;
+    padding: 8px 12px;
+    border-right: none;
+  }
+  .health-item span {
+    font-size: 10px;
+  }
+  .health-item strong {
+    font-size: 14px;
+  }
   .health-links {
     display: none;
   }

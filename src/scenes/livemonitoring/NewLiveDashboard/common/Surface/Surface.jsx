@@ -4,6 +4,7 @@ import "./Surface.css";
 /**
  * Surface — MUI Paper styled as the standard dashboard card.
  * Fills its grid cell; parent controls placement.
+ * Padding scales by breakpoint; md+ keeps desktop values.
  */
 export default function Surface({ children, className = "", component = "section", sx = {} }) {
   return (
@@ -16,8 +17,14 @@ export default function Surface({ children, className = "", component = "section
         minHeight: 0,
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
-        p: "5px 7px",
+        overflow: { xs: "visible", sm: "hidden" },
+        p: {
+          xs: "10px 12px",
+          sm: "7px 9px",
+          md: "5px 7px",
+          lg: "5px 7px",
+          xl: "5px 7px",
+        },
         ...sx,
       }}
     >

@@ -2,70 +2,87 @@ import { useContext } from "react";
 import { Box } from "@mui/material";
 import { AppContext } from "../../../../services/AppContext";
 import Surface from "../common/Surface/Surface";
-import SectionTitle from "../common/SectionTitle/SectionTitle"; 
+import SectionTitle from "../common/SectionTitle/SectionTitle";
 
- const dischargeTime = (totalSeconds = 0) => {
-    try {
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+const dischargeTime = (totalSeconds = 0) => {
+  try {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-      const hr = hours < 10 ? "0" + hours : hours;
-      const mn = minutes < 10 ? "0" + minutes : minutes;
-      const sc = seconds < 10 ? "0" + seconds : seconds;
+    const hr = hours < 10 ? "0" + hours : hours;
+    const mn = minutes < 10 ? "0" + minutes : minutes;
+    const sc = seconds < 10 ? "0" + seconds : seconds;
 
-      return `${hr}:${mn}:${sc}`;
-    } catch (error) {
-      return "--";
-    }
-  };
+    return `${hr}:${mn}:${sc}`;
+  } catch (error) {
+    return "--";
+  }
+};
+
 export function Cycles() {
   const { data } = useContext(AppContext);
   const device = data[0];
 
   if (!device) return <div></div>;
-const { chargeTimeCycle, systemPeakCurrentInChargeOneCycle,
-    dischargeTimeCycle,systemPeakCurrentInDischargeOneCycle  } = device;
+  const {
+    chargeTimeCycle,
+    systemPeakCurrentInChargeOneCycle,
+    dischargeTimeCycle,
+    systemPeakCurrentInDischargeOneCycle,
+  } = device;
+
   const Charge = [
     ["Peak current", `${systemPeakCurrentInChargeOneCycle} A`],
-    ["Runtime", `${dischargeTime(chargeTimeCycle)}`]
+    ["Runtime", `${dischargeTime(chargeTimeCycle)}`],
   ];
-   const Discharge = [
+  const Discharge = [
     ["Peak current", `${systemPeakCurrentInDischargeOneCycle} A`],
-    ["Runtime", `${dischargeTime(dischargeTimeCycle)}`]
+    ["Runtime", `${dischargeTime(dischargeTimeCycle)}`],
   ];
+
   return (
     <Surface className="cycle-card">
       <SectionTitle>Cycle information</SectionTitle>
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "8px",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr" },
+          gap: { xs: "12px", sm: "8px", md: "8px" },
           minHeight: 0,
           flex: 1,
-          overflow: "hidden",
+          overflow: { xs: "visible", sm: "hidden" },
           "& > div + div": {
-            pl: "8px",
-            borderLeft: "1px solid var(--border)",
+            pl: { xs: 0, sm: "8px", md: "8px" },
+            pt: { xs: "8px", sm: 0, md: 0 },
+            borderLeft: {
+              xs: "none",
+              sm: "1px solid var(--border)",
+              md: "1px solid var(--border)",
+            },
+            borderTop: {
+              xs: "1px solid var(--border)",
+              sm: "none",
+              md: "none",
+            },
           },
           "& h3": {
-            m: "0 0 4px",
+            m: { xs: "0 0 6px", sm: "0 0 4px", md: "0 0 4px" },
             color: "var(--primary)",
-            fontSize: "10px",
+            fontSize: { xs: "12px", sm: "11px", md: "10px" },
             letterSpacing: ".06em",
             textTransform: "uppercase",
           },
           "& p": {
             display: "flex",
             justifyContent: "space-between",
-            m: "4px 0",
+            m: { xs: "6px 0", sm: "4px 0", md: "4px 0" },
             color: "var(--muted-foreground)",
-            fontSize: "10px",
+            fontSize: { xs: "12px", sm: "11px", md: "10px" },
           },
           "& b": {
             color: "var(--foreground)",
-            fontSize: "12px",
+            fontSize: { xs: "14px", sm: "13px", md: "12px" },
             fontVariantNumeric: "tabular-nums",
           },
         }}

@@ -60,3 +60,20 @@
   margin: 0;
   font-weight: 700;
 }
+
+@media (max-width: 599px) {
+  .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  .popover-title {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .device-popover dl div,
+  .MuiPopover-paper dl div {
+    font-size: 12px;
+    padding: 6px 0;
+    gap: 12px;
+  }
+}

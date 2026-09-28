@@ -38,8 +38,49 @@
   font-weight: 600;
 }
 
-@media (max-width: 1399px) {
+/* small desktop */
+@media (max-width: 1199px) {
   .metric strong {
     font-size: 14px;
+  }
+}
+
+/* tablet */
+@media (max-width: 899px) {
+  .metric-grid {
+    gap: 8px;
+  }
+  .metric {
+    padding: 6px 8px;
+  }
+  .metric > span {
+    font-size: 10px;
+  }
+  .metric strong {
+    font-size: 15px;
+    margin-top: 3px;
+  }
+  .metric small {
+    font-size: 11px;
+  }
+}
+
+/* mobile */
+@media (max-width: 599px) {
+  .metric-grid {
+    gap: 8px;
+  }
+  .metric {
+    padding: 10px 10px;
+  }
+  .metric > span {
+    font-size: 11px;
+  }
+  .metric strong {
+    font-size: 18px;
+    margin-top: 4px;
+  }
+  .metric small {
+    font-size: 12px;
   }
 }
